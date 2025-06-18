@@ -72,50 +72,16 @@
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
         }
 
-        /* --- 标题和按钮 --- */
-        .section-title {
-            color: #1a2a4c;
-            border-left: 4px solid #0d6efd;
-            padding-left: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-sub-title {
-            color: #34495e;
-            margin-top: 2rem;
-        }
-
-        .btn-primary {
-            background-color: #0d6efd;
-            border: none;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
-        }
-
-        .btn-outline-secondary {
+        /* --- 【新增】美化关键词配置卡片 --- */
+        .keyword-card {
             transition: all 0.3s ease;
         }
-
-        /* --- 关键词配置区域 --- */
-        .keyword-section {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            border: 1px solid #e9ecef;
+        .keyword-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
-
-        .handler-label {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .sub-handler-label {
-            font-size: 1rem;
-            color: #495057;
+        .card-header.bg-light-blue {
+            background-color: #e7f1ff;
         }
 
         /* --- 状态消息 --- */
@@ -159,7 +125,7 @@
                 <div class="mb-4">
                     <label for="externalUserId" class="form-label"><i class="bi bi-person-badge"></i> 用户 ID (External User ID)</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入您的用户ID" required>
+                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入您的用户ID或'default'以配置全局默认值" required>
                         <button class="btn btn-secondary" type="button" id="loadConfigBtn">加载配置</button>
                     </div>
                 </div>
@@ -194,9 +160,7 @@
                             <label for="systemPrompt" class="form-label">系统提示词 (System Prompt)</label>
                             <textarea class="form-control" id="systemPrompt" name="systemPrompt" rows="4" required></textarea>
                         </div>
-
                         <hr class="my-4">
-
                         <h3 class="section-title">多媒体模型配置 (SiliconFlow)</h3>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -228,61 +192,99 @@
                     </div>
 
                     <div class="tab-pane fade" id="keyword-config" role="tabpanel" aria-labelledby="keyword-config-tab">
-                        <h3 class="mb-3 section-title">功能关键词配置</h3>
-                        <p class="text-muted">请用英文逗号 (,) 分隔每个关键词，例如: 关键词1,关键词2</p>
-
+                        <p class="text-muted mb-4">请用英文逗号 (,) 分隔每个关键词。修改后请点击对应模块的“保存”按钮。</p>
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-4 keyword-section">
-                                    <label for="DrawingHandler" class="form-label handler-label">绘画</label>
-                                    <input type="text" class="form-control keyword-input" id="DrawingHandler" data-handler="DrawingHandler" placeholder="例如: 画,绘画,drawing">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('DrawingHandler')">保存</button>
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-palette-fill me-2 text-primary"></i>绘画</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control keyword-input" id="DrawingHandler" data-handler="DrawingHandler" placeholder="例如: 画,绘画,drawing">
+                                            <button class="btn btn-outline-primary" type="button" onclick="saveKeywords('DrawingHandler')"><i class="bi bi-save"></i> 保存</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-4 keyword-section">
-                                    <label for="LotteryHandler" class="form-label handler-label">彩票</label>
-                                    <input type="text" class="form-control keyword-input" id="LotteryHandler" data-handler="LotteryHandler" placeholder="例如: 大乐透,双色球,开奖">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('LotteryHandler')">保存</button>
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-ticket-detailed-fill me-2 text-success"></i>彩票</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control keyword-input" id="LotteryHandler" data-handler="LotteryHandler" placeholder="例如: 大乐透,双色球,开奖">
+                                            <button class="btn btn-outline-success" type="button" onclick="saveKeywords('LotteryHandler')"><i class="bi bi-save"></i> 保存</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-4 keyword-section">
-                                    <label for="MenuHandler" class="form-label handler-label">菜单</label>
-                                    <input type="text" class="form-control keyword-input" id="MenuHandler" data-handler="MenuHandler" placeholder="例如: 菜单,帮助,help">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('MenuHandler')">保存</button>
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2 text-info"></i>菜单</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control keyword-input" id="MenuHandler" data-handler="MenuHandler" placeholder="例如: 菜单,帮助,help">
+                                            <button class="btn btn-outline-info" type="button" onclick="saveKeywords('MenuHandler')"><i class="bi bi-save"></i> 保存</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-4 keyword-section">
-                                    <label for="VoiceReplyHandler" class="form-label handler-label">语音回复</label>
-                                    <input type="text" class="form-control keyword-input" id="VoiceReplyHandler" data-handler="VoiceReplyHandler" placeholder="例如: 语音回答,用嘴说">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('VoiceReplyHandler')">保存</button>
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-mic-fill me-2 text-danger"></i>语音回复</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control keyword-input" id="VoiceReplyHandler" data-handler="VoiceReplyHandler" placeholder="例如: 语音回答,用嘴说">
+                                            <button class="btn btn-outline-danger" type="button" onclick="saveKeywords('VoiceReplyHandler')"><i class="bi bi-save"></i> 保存</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-4 keyword-section">
-                                    <label for="KnowledgeHandler" class="form-label handler-label">知识库问答</label>
-                                    <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('KnowledgeHandler')">保存</button>
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-book-half me-2 text-secondary"></i>知识库问答</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="saveKeywords('KnowledgeHandler')"><i class="bi bi-save"></i> 保存</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
                             <div class="col-md-6">
-                                <div class="mb-4 keyword-section">
-                                    <label class="form-label handler-label">系统指令</label>
-                                    <p class="text-muted small">系统指令的关键词已拆分:</p>
-                                    <div class="ms-3">
+                                <div class="card shadow-sm mb-4 keyword-card">
+                                    <div class="card-header bg-light-blue">
+                                        <h6 class="mb-0 fw-bold"><i class="bi bi-terminal-fill me-2 text-dark"></i>系统指令</h6>
+                                    </div>
+                                    <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="SystemHandler_ClearHistory" class="form-label sub-handler-label">清空历史对话</label>
-                                            <input type="text" class="form-control keyword-input" id="SystemHandler_ClearHistory" data-handler="SystemHandler_ClearHistory">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_ClearHistory')">保存</button>
+                                            <label for="SystemHandler_ClearHistory" class="form-label small">清空历史对话</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control keyword-input" id="SystemHandler_ClearHistory" data-handler="SystemHandler_ClearHistory">
+                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_ClearHistory')"><i class="bi bi-save"></i></button>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="SystemHandler_QueryId" class="form-label sub-handler-label">查询ID</label>
-                                            <input type="text" class="form-control keyword-input" id="SystemHandler_QueryId" data-handler="SystemHandler_QueryId">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_QueryId')">保存</button>
+                                            <label for="SystemHandler_QueryId" class="form-label small">查询ID</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control keyword-input" id="SystemHandler_QueryId" data-handler="SystemHandler_QueryId">
+                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_QueryId')"><i class="bi bi-save"></i></button>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="SystemHandler_ChatStats" class="form-label sub-handler-label">对话统计</label>
-                                            <input type="text" class="form-control keyword-input" id="SystemHandler_ChatStats" data-handler="SystemHandler_ChatStats">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_ChatStats')">保存</button>
+                                            <label for="SystemHandler_ChatStats" class="form-label small">对话统计</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control keyword-input" id="SystemHandler_ChatStats" data-handler="SystemHandler_ChatStats">
+                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_ChatStats')"><i class="bi bi-save"></i></button>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="SystemHandler_UserQuestions" class="form-label sub-handler-label">用户提问记录</label>
-                                            <input type="text" class="form-control keyword-input" id="SystemHandler_UserQuestions" data-handler="SystemHandler_UserQuestions">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_UserQuestions')">保存</button>
+                                            <label for="SystemHandler_UserQuestions" class="form-label small">用户提问记录</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control keyword-input" id="SystemHandler_UserQuestions" data-handler="SystemHandler_UserQuestions">
+                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_UserQuestions')"><i class="bi bi-save"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -302,25 +304,9 @@
     const API_BASE_URL = '/api/config';
     const loader = document.getElementById('loader');
 
-    /**
-     * 显示加载动画
-     */
-    function showLoader() {
-        loader.style.display = 'block';
-    }
+    function showLoader() { loader.style.display = 'block'; }
+    function hideLoader() { loader.style.display = 'none'; }
 
-    /**
-     * 隐藏加载动画
-     */
-    function hideLoader() {
-        loader.style.display = 'none';
-    }
-
-    /**
-     * 显示状态消息
-     * @param {string} message - 要显示的消息
-     * @param {boolean} isError - 是否为错误消息
-     */
     function showStatusMessage(message, isError = false) {
         const statusDiv = document.getElementById('statusMessage');
         const alertClass = isError ? 'alert-danger' : 'alert-success';
@@ -330,20 +316,12 @@
                              </div>`;
     }
 
-    /**
-     * 加载AI配置
-     * @param {string} userId - 用户ID
-     */
     async function loadAiConfig(userId) {
         if (!userId) return;
         try {
             const response = await fetch(`${API_BASE_URL}/ai/${userId}`);
-            if (!response.ok) {
-                throw new Error(`无法加载AI配置: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`无法加载AI配置: ${response.statusText}`);
             const config = await response.json();
-
-            // 填充表单
             for (const key in config) {
                 if (document.getElementById(key)) {
                     document.getElementById(key).value = config[key];
@@ -354,20 +332,12 @@
         }
     }
 
-    /**
-     * 加载所有关键词配置
-     * @param {string} userId - 用户ID
-     */
     async function loadAllKeywords(userId) {
         if (!userId) return;
         try {
             const response = await fetch(`${API_BASE_URL}/keywords/${userId}`);
-            if (!response.ok) {
-                throw new Error(`无法加载关键词配置: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`无法加载关键词配置: ${response.statusText}`);
             const keywordsMap = await response.json();
-
-            // 填充所有关键词输入框
             for (const handlerName in keywordsMap) {
                 const inputElement = document.getElementById(handlerName);
                 if (inputElement) {
@@ -379,9 +349,6 @@
         }
     }
 
-    /**
-     * 统一加载所有配置
-     */
     async function loadAllConfigs() {
         const userId = document.getElementById('externalUserId').value.trim();
         if (!userId) {
@@ -397,38 +364,25 @@
         showStatusMessage("配置已成功加载！", false);
     }
 
-
-    /**
-     * 保存AI配置
-     */
     async function saveAiConfig() {
         const form = document.getElementById('configForm');
         const formData = new FormData(form);
         const configData = {};
-        formData.forEach((value, key) => {
-            configData[key] = value;
-        });
+        formData.forEach((value, key) => { configData[key] = value; });
 
         const userId = configData.externalUserId.trim();
         if (!userId) {
             showStatusMessage("用户ID不能为空！", true);
             return;
         }
-
         showLoader();
-
         try {
             const response = await fetch(`${API_BASE_URL}/ai`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configData),
             });
-
-            if (!response.ok) {
-                throw new Error(`保存失败: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`保存失败: ${response.statusText}`);
             showStatusMessage('AI 配置已成功保存！', false);
         } catch (error) {
             showStatusMessage(`保存AI配置时出错: ${error.message}`, true);
@@ -437,32 +391,21 @@
         }
     }
 
-    /**
-     * 保存指定处理器的关键词
-     * @param {string} handlerName - 处理器名称
-     */
     async function saveKeywords(handlerName) {
         const userId = document.getElementById('externalUserId').value.trim();
         if (!userId) {
             showStatusMessage("保存关键词前，请输入用户ID！", true);
             return;
         }
-
         const inputElement = document.getElementById(handlerName);
-        // 将关键词字符串按逗号分割，并去除每个关键词前后的空格
         const keywords = inputElement.value.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0);
-
         showLoader();
-
         try {
             const response = await fetch(`${API_BASE_URL}/keywords?externalUserId=${encodeURIComponent(userId)}&handlerName=${encodeURIComponent(handlerName)}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(keywords),
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(`保存失败: ${errorData.message || response.statusText}`);
@@ -475,18 +418,13 @@
         }
     }
 
-    // 页面加载完成后执行的逻辑
     document.addEventListener('DOMContentLoaded', () => {
-        // 如果URL中已有userId，则自动加载
         const userIdInput = document.getElementById('externalUserId');
         if (userIdInput.value) {
             loadAllConfigs();
         }
-
-        // 为加载按钮添加事件监听器
         document.getElementById('loadConfigBtn').addEventListener('click', loadAllConfigs);
     });
-
 </script>
 
 </body>
