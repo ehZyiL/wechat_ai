@@ -1,0 +1,57 @@
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/kn_ai_chat_db
+    driverClassName: org.h2.Driver
+    username: xlike
+    password: 123456
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      timeout: 1800000
+      lettuce:
+        pool:
+          max-active: 20
+          max-wait: -1
+          max-idle: 5
+          min-idle: 0
+
+wechat:
+  token: QMb3kSQpbYMlal7usTnSRgD7
+  encoding-aes-key: VsvNH6Cx5UP6p6uj4xJVrmJwCvqVodArkVXc7kN3Snt
+  corp-id: wwcd6541ab12081931
+  secret: mUiltAEwGIHhE1tzMNMHAVbDz_d20F7UKT01sX1YdeI
+  open-kfid: kfc5fa2f55aad562e06
+  push:
+    open-kfid: kfc5fa2f55aad562e06
+    external-user-id: wmKoYiHAAAPNwz8SWJsCTbDbIOaRECxg
+
+ai:
+  # 您的AI模型API基础地址
+  base-url: https://api.siliconflow.cn/v1/chat/completions
+  # 您的API密钥
+  api-key: sk-lsqccdgbruyeuzjyypnjghyytkccmdgvafrlruaoxqdgrqum
+  # 使用的模型名称
+  model: deepseek-ai/DeepSeek-V3
+  # 自定义提示词
+  system-prompt: 你是由木池制作的一个AI机器人，你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{"answer":{reply_text:'你好啊'}}],严格使用我的json结构
+  siliconflow:
+    # API基础地址，到 v1 即可
+    base-url: https://api.siliconflow.cn/v1
+    # 绘画模型名称
+    image-model: "Kwai-Kolors/Kolors"
+    # 文本转语音 (TTS) 模型
+    tts-model: "FunAudioLLM/CosyVoice2-0.5B"
+    # 【新增】语音转文本 (ASR) 模型
+    stt-model: "FunAudioLLM/SenseVoiceSmall"
+    # TTS 使用的音色ID
+    voice: "speech:cxk:clykbri4i000210pbgcrapso0:whmpulffgeakvrxayxgk"
+    # 视觉模型
+    vlm-model: "Qwen/Qwen2-VL-72B-Instruct"
