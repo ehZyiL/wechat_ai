@@ -10,10 +10,10 @@ import xlike.top.kn_ai_chat.reply.Reply;
 import xlike.top.kn_ai_chat.reply.TextReply;
 import xlike.top.kn_ai_chat.service.DrawingService;
 import xlike.top.kn_ai_chat.service.MediaService;
+import xlike.top.kn_ai_chat.service.UserConfigService;
 import xlike.top.kn_ai_chat.utils.ImageCompressionUtil;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,66 +24,65 @@ import java.util.Optional;
 public class DrawingHandler implements MessageHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DrawingHandler.class);
-    private static final List<String> KEYWORDS = Arrays.asList("画一张", "画一个", "画张", "画个");
-    // 定义微信图片上传大小限制 (2MB)
     private static final long WECHAT_IMAGE_SIZE_LIMIT = 2 * 1024 * 1024;
 
     private final DrawingService drawingService;
     private final MediaService mediaService;
     private final ImageCompressionUtil imageCompressionUtil;
+    private final UserConfigService userConfigService;
 
-    public DrawingHandler(DrawingService drawingService, MediaService mediaService, ImageCompressionUtil imageCompressionUtil) {
+
+    public DrawingHandler(DrawingService drawingService, MediaService mediaService, ImageCompressionUtil imageCompressionUtil, UserConfigService userConfigService) {
         this.drawingService = drawingService;
         this.mediaService = mediaService;
         this.imageCompressionUtil = imageCompressionUtil;
+        this.userConfigService = userConfigService;
     }
 
     @Override
     public boolean canHandle(String content) {
-        return KEYWORDS.stream().anyMatch(content::startsWith);
+        // 判断消息是否以任意一个“绘画”关键词开头
+        return userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName())
+                .stream()
+                .anyMatch(content::startsWith);
     }
 
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
+        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+
         String prompt = content;
-        for (String keyword : KEYWORDS) {
+        // 找到是哪个关键词触发的，并从消息中移除，得到真正的绘画提示词
+        for (String keyword : keywords) {
             if (content.startsWith(keyword)) {
                 prompt = content.substring(keyword.length()).trim();
                 break;
             }
         }
+
         logger.info("接收到绘画指令，提示词: {}", prompt);
 
-        // 1. 从AI生成原始图片
-        File originalImageFile = drawingService.generateImage(prompt);
+        File originalImageFile = drawingService.generateImage(prompt, externalUserId);
         if (originalImageFile == null) {
-            return Optional.of(new TextReply("抱歉，绘画失败了，真的是FW木池，请稍后再试。"));
+            return Optional.of(new TextReply("抱歉，绘画失败了，请稍后再试。"));
         }
 
-        // 2. 调用工具类进行压缩
         Optional<File> finalImageFileOpt = imageCompressionUtil.compressImageIfNecessary(originalImageFile, WECHAT_IMAGE_SIZE_LIMIT);
 
-        // 【重要修正】如果压缩失败，清理原始文件并返回错误
         if (finalImageFileOpt.isEmpty()) {
-            originalImageFile.delete(); // 清理原始文件
+            originalImageFile.delete();
             return Optional.of(new TextReply("图片生成成功，但压缩至2MB以下失败了，无法发送给您。"));
         }
         
         File finalImageFile = finalImageFileOpt.get();
 
-        // 3. 上传最终处理过的图片
         Optional<String> mediaIdOpt = mediaService.uploadTemporaryMedia(finalImageFile, MediaType.IMAGE);
 
-        // 4. 【重要修正】在上传完成后，再进行文件清理
-        // 如果压缩过程创建了一个新文件（即 finalImageFile 和 originalImageFile 不是同一个文件），
-        // 那么原始文件现在可以安全地删除了。
         if (!originalImageFile.equals(finalImageFile)) {
             originalImageFile.delete();
         }
-        // 无论如何，最终被上传的那个文件（可能是原始文件，也可能是压缩后的文件）在使用完毕后都应删除。
         finalImageFile.delete();
 
-        // 5. 返回结果
         return mediaIdOpt.<Reply>map(ImageReply::new)
                 .or(() -> Optional.of(new TextReply("图片上传失败，无法发送给您。")));
     }

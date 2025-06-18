@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import xlike.top.kn_ai_chat.domain.AiConfig;
 import xlike.top.kn_ai_chat.domain.MessageLog;
 
 import java.util.ArrayList;
@@ -17,37 +17,52 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 负责与大语言模型进行交互的服务.
+ * @author Administrator
+ */
 @Service
 public class AiService {
 
     private static final Logger logger = LoggerFactory.getLogger(AiService.class);
 
-    @Value("${ai.base-url}")
-    private String aiBaseUrl;
-    @Value("${ai.api-key}")
-    private String aiApiKey;
-    @Value("${ai.model}")
-    private String aiModel;
-    @Value("${ai.system-prompt}")
-    private String systemPrompt;
-
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserConfigService userConfigService;
 
-    public AiService(RestTemplate restTemplate) {
+    /**
+     * 【修改】将固定的JSON指令定义为常量，以便复用.
+     */
+    private static final String JSON_STRUCTURE_PROMPT = " 你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{\"answer\":{\"reply_text:'你好啊'}}],严格使用我的json结构。";
+
+
+    public AiService(RestTemplate restTemplate, UserConfigService userConfigService) {
         this.restTemplate = restTemplate;
+        this.userConfigService = userConfigService;
     }
 
     /**
-     * 调用AI大模型进行常规对话
-     *
-     * @param history  历史消息
+     * 基于历史消息记录获取AI的聊天完成回复.
+     * @param history 历史消息列表
      * @param openKfid 客服ID
-     * @return AI回复的纯文本
+     * @return AI生成的回复文本
      */
     public String getChatCompletion(List<MessageLog> history, String openKfid) {
+        AiConfig aiConfig = userConfigService.getAiConfig(history.get(0).getFromUser());
+
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", systemPrompt));
+        String userSystemPrompt = aiConfig.getSystemPrompt();
+        String finalSystemPrompt;
+
+        // 检查用户配置是否已包含指令
+        if (userSystemPrompt != null && userSystemPrompt.contains(JSON_STRUCTURE_PROMPT)) {
+            finalSystemPrompt = userSystemPrompt;
+        } else {
+            //如果不包含，则将用户配置和我们的指令拼接起来
+            finalSystemPrompt = userSystemPrompt + JSON_STRUCTURE_PROMPT;
+        }
+        
+        messages.add(Map.of("role", "system", "content", finalSystemPrompt));
 
         for (MessageLog log : history) {
             Map<String, String> message = new HashMap<>();
@@ -60,22 +75,20 @@ public class AiService {
             messages.add(message);
         }
         
-        return executeChatCompletion(messages);
+        return executeChatCompletion(messages, aiConfig.getAiBaseUrl(), aiConfig.getAiApiKey(), aiConfig.getAiModel());
     }
 
     /**
-     * 基于提供的上下文进行问答 (RAG)
-     *
-     * @param userQuestion 用户的提问
-     * @param context      从知识库中检索到的上下文信息
-     * @param openKfid     客服ID
-     * @return AI的回答
+     * 基于特定的背景知识(上下文)进行增强的问答(RAG).
+     * @param userQuestion 用户的问题
+     * @param context 提供的背景知识
+     * @param externalUserId 外部用户ID
+     * @param openKfid 客服ID
+     * @return AI生成的、基于上下文的回复
      */
-    public String getChatCompletionWithContext(String userQuestion, String context, String openKfid) {
-        /*
-         * 【核心修改】更新RAG的System Prompt，明确指示AI以JSON格式返回答案。
-         * 这里的Prompt结合了RAG的要求和您对JSON格式的严格要求。
-         */
+    public String getChatCompletionWithContext(String userQuestion, String context, String externalUserId, String openKfid) {
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+
         String ragSystemPrompt = String.format(
                 "你是一个智能助手，请严格根据下面提供的“背景知识”来回答用户的问题。" +
                 "如果背景知识中没有相关信息，就在返回的JSON中说明情况。" +
@@ -88,33 +101,32 @@ public class AiService {
         messages.add(Map.of("role", "system", "content", ragSystemPrompt));
         messages.add(Map.of("role", "user", "content", userQuestion));
 
-        return executeChatCompletion(messages);
+        return executeChatCompletion(messages, aiConfig.getAiBaseUrl(), aiConfig.getAiApiKey(), aiConfig.getAiModel());
     }
     
     /**
-     * 执行Chat Completion请求的私有通用方法
-     *
+     * 执行对大模型API的调用.
      * @param messages 构造好的消息列表
-     * @return AI回复的文本，或在出错时返回默认错误信息
+     * @param baseUrl API基础地址
+     * @param apiKey API密钥
+     * @param model 模型名称
+     * @return AI返回的原始JSON字符串中的内容部分
      */
-    private String executeChatCompletion(List<Map<String, String>> messages) {
+    private String executeChatCompletion(List<Map<String, String>> messages, String baseUrl, String apiKey, String model) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + aiApiKey);
+        headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", aiModel);
+        requestBody.put("model", model);
         requestBody.put("messages", messages);
         requestBody.put("stream", false);
-        
-        if (true) {
-            requestBody.put("response_format", Map.of("type", "json_object"));
-        }
+        requestBody.put("response_format", Map.of("type", "json_object"));
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
         try {
-            String response = restTemplate.postForObject(aiBaseUrl, requestEntity, String.class);
+            String response = restTemplate.postForObject(baseUrl, requestEntity, String.class);
             logger.info("AI模型响应: {}", response);
             JsonNode root = objectMapper.readTree(response);
 
@@ -123,9 +135,6 @@ public class AiService {
                 if (firstChoice.has("message") && firstChoice.get("message").has("content")) {
                     String contentJsonString = firstChoice.get("message").get("content").asText();
                     
-                    /*
-                     * 由于现在所有场景都要求返回JSON，我们统一使用JSON解析逻辑
-                     */
                     logger.info("准备解析AI内容JSON: {}", contentJsonString);
                     JsonNode contentRoot = objectMapper.readTree(contentJsonString);
                     
@@ -145,10 +154,9 @@ public class AiService {
     }
 
     /**
-     * 从一个JSON对象中，按 "answer.reply_text" 路径提取文本
-     *
-     * @param node 要解析的JSON节点 (应为一个ObjectNode)
-     * @return 提取到的文本，或在找不到时返回null
+     * 从AI返回的JSON内容中提取最终的回复文本.
+     * @param node JSON节点
+     * @return 回复文本
      */
     private String extractReplyText(JsonNode node) {
         if (node != null && node.isObject() && node.has("answer") && node.get("answer").has("reply_text")) {

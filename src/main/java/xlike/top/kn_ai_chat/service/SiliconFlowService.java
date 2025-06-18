@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import xlike.top.kn_ai_chat.domain.AiConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,44 +25,23 @@ public class SiliconFlowService {
 
     private static final Logger logger = LoggerFactory.getLogger(SiliconFlowService.class);
 
-    @Value("${ai.siliconflow.base-url}")
-    private String baseUrl;
-
-    @Value("${ai.api-key}")
-    private String apiKey;
-
-    @Value("${ai.siliconflow.image-model}")
-    private String imageModel;
-    
-    @Value("${ai.siliconflow.tts-model}")
-    private String ttsModel;
-    
-    @Value("${ai.siliconflow.stt-model}")
-    private String sttModel;
-
-    /*
-     *【新增】注入视觉语言模型配置
-     */
-    @Value("${ai.siliconflow.vlm-model}")
-    private String vlmModel;
-
-    @Value("${ai.siliconflow.voice}")
-    private String voice;
-
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserConfigService userConfigService;
 
-    public SiliconFlowService(RestTemplate restTemplate) {
+    public SiliconFlowService(RestTemplate restTemplate, UserConfigService userConfigService) {
         this.restTemplate = restTemplate;
+        this.userConfigService = userConfigService;
     }
 
-    public Optional<String> generateImageAndGetUrl(String prompt) {
-        String url = baseUrl + "/images/generations";
+    public Optional<String> generateImageAndGetUrl(String prompt, String externalUserId) {
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+        String url = aiConfig.getSfBaseUrl() + "/images/generations";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(aiConfig.getAiApiKey());
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", imageModel);
+        requestBody.put("model", aiConfig.getSfImageModel());
         requestBody.put("prompt", prompt);
         requestBody.put("image_size", "1024x1024");
         requestBody.put("batch_size", 1);
@@ -82,20 +61,23 @@ public class SiliconFlowService {
         }
     }
 
-    public Optional<File> generateSpeech(String textInput) {
-        String url = baseUrl + "/audio/speech";
+    public Optional<File> generateSpeech(String textInput, String externalUserId) {
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+        String url = aiConfig.getSfBaseUrl() + "/audio/speech";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(aiConfig.getAiApiKey());
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", ttsModel);
+        requestBody.put("model", aiConfig.getSfTtsModel());
         requestBody.put("input", textInput);
-        requestBody.put("voice", voice);
+        requestBody.put("voice", aiConfig.getSfVoice());
         requestBody.put("response_format", "mp3");
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
         try {
             byte[] audioBytes = restTemplate.postForObject(url, requestEntity, byte[].class);
-            if (audioBytes == null || audioBytes.length == 0) return Optional.empty();
+            if (audioBytes == null || audioBytes.length == 0) {
+                return Optional.empty();
+            }
             File tempFile = File.createTempFile("tts-", ".mp3");
             try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                 fos.write(audioBytes);
@@ -108,14 +90,15 @@ public class SiliconFlowService {
         }
     }
 
-    public Optional<String> transcribeAudio(File audioFile) {
-        String url = baseUrl + "/audio/transcriptions";
+    public Optional<String> transcribeAudio(File audioFile, String externalUserId) {
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+        String url = aiConfig.getSfBaseUrl() + "/audio/transcriptions";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(aiConfig.getAiApiKey());
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(audioFile));
-        body.add("model", sttModel);
+        body.add("model", aiConfig.getSfSttModel());
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         try {
             String response = restTemplate.postForObject(url, requestEntity, String.class);
@@ -131,19 +114,13 @@ public class SiliconFlowService {
         }
     }
 
-    /**
-     * 【新增方法】调用VLM分析图片内容
-     *
-     * @param imageFile 要分析的图片文件
-     * @param prompt    对图片提问的文本
-     * @return 包含AI分析结果的Optional，如果失败则为空
-     */
-    public Optional<String> analyzeImage(File imageFile, String prompt) {
-        String url = baseUrl + "/chat/completions";
+    public Optional<String> analyzeImage(File imageFile, String prompt, String externalUserId) {
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+        String url = aiConfig.getSfBaseUrl() + "/chat/completions";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(aiConfig.getAiApiKey());
 
         try {
             String base64Image = encodeFileToBase64(imageFile);
@@ -163,7 +140,7 @@ public class SiliconFlowService {
             message.put("content", contentList);
             
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", vlmModel);
+            requestBody.put("model", aiConfig.getSfVlmModel());
             requestBody.put("messages", Collections.singletonList(message));
             requestBody.put("max_tokens", 512);
 
@@ -187,16 +164,9 @@ public class SiliconFlowService {
         }
     }
 
-    /**
-     * 【新增辅助方法】将文件编码为Base64数据URI
-     */
     private String encodeFileToBase64(File file) throws IOException {
         byte[] fileContent = Files.readAllBytes(file.toPath());
         String encodedString = Base64.getEncoder().encodeToString(fileContent);
-        /*
-         * 暂时硬编码为jpeg，因为微信下载的图片通常是此格式。
-         * 更稳妥的方式是根据文件头判断MIME类型。
-         */
         return "data:image/jpeg;base64," + encodedString;
     }
 }

@@ -63,13 +63,23 @@ public class KnowledgeBaseService {
     }
 
     /**
-     * 列出指定用户知识库中的所有文件
+     * 【修改】直接返回知识库条目列表，供API使用
+     *
+     * @param externalUserId 用户ID
+     * @return 知识库条目列表
+     */
+    public List<Knowledge> listFilesForUser(String externalUserId) {
+        return repository.findByExternalUserId(externalUserId);
+    }
+    
+    /**
+     * 【新增】获取格式化后的文件列表字符串，供聊天机器人使用
      *
      * @param externalUserId 用户ID
      * @return 格式化后的文件列表字符串
      */
-    public String listFilesForUser(String externalUserId) {
-        List<Knowledge> entries = repository.findByExternalUserId(externalUserId);
+    public String getFormattedFileListForUser(String externalUserId) {
+        List<Knowledge> entries = listFilesForUser(externalUserId);
         if (entries.isEmpty()) {
             return "ℹ️ 您的知识库中还没有任何文件。";
         }
@@ -84,6 +94,7 @@ public class KnowledgeBaseService {
         sb.append("-------------------\n您可以通过“删除文件 [ID]”来移除文件。");
         return sb.toString();
     }
+
 
     /**
      * 为指定用户删除一个知识库文件

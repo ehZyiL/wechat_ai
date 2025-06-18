@@ -7,12 +7,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.URI; // 1. 导入 URI 类
+import java.net.URI;
 import java.util.Optional;
 
-/**
- * @author Administrator
- */
 @Service
 public class DrawingService {
 
@@ -26,8 +23,8 @@ public class DrawingService {
         this.restTemplate = restTemplate;
     }
 
-    public File generateImage(String prompt) {
-        Optional<String> imageUrlOpt = siliconFlowService.generateImageAndGetUrl(prompt);
+    public File generateImage(String prompt, String externalUserId) {
+        Optional<String> imageUrlOpt = siliconFlowService.generateImageAndGetUrl(prompt, externalUserId);
 
         if (imageUrlOpt.isEmpty()) {
             logger.error("未能获取到图片URL，绘画失败。");
@@ -37,11 +34,9 @@ public class DrawingService {
         String imageUrl = imageUrlOpt.get();
 
         try {
-            // 【核心修正】将URL字符串转换为URI对象，防止RestTemplate二次编码
             URI uri = new URI(imageUrl);
             logger.info("准备从URI下载图片: {}", uri);
 
-            // 使用接收URI的getForObject重载方法
             byte[] imageBytes = restTemplate.getForObject(uri, byte[].class);
             
             if (imageBytes == null || imageBytes.length == 0) {
@@ -60,7 +55,6 @@ public class DrawingService {
             return tempFile;
 
         } catch (Exception e) {
-            // 在日志中打印原始URL，方便调试
             logger.error("从URL下载或保存图片时发生错误, URL: {}", imageUrl, e);
             return null;
         }

@@ -35,7 +35,6 @@ public class WeChatService {
 
     @Value("${wechat.token}")
     private String token;
-
     @Value("${wechat.encoding-aes-key}")
     private String encodingAesKey;
 
@@ -48,11 +47,16 @@ public class WeChatService {
     private final SiliconFlowService siliconFlowService;
     private final FormatFileService formatFileService;
     private final KnowledgeBaseService knowledgeBaseService;
-
+    private final UserConfigService userConfigService;
+    private final WeChatUserService weChatUserService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private byte[] encodingAesKeyBytes;
+    
+    // 用于消息去重的Redis Key前缀
     private static final String PROCESSED_MSG_ID_KEY_PREFIX = "wechat:processed_msgid:";
+    // 用于存储消息拉取游标的Redis Key
+    private static final String MSG_CURSOR_KEY = "wechat:msg_cursor";
 
     public WeChatService(
             MessageLogRepository messageLogRepository,
@@ -63,7 +67,9 @@ public class WeChatService {
             MediaService mediaService,
             SiliconFlowService siliconFlowService,
             FormatFileService formatFileService,
-            KnowledgeBaseService knowledgeBaseService) {
+            KnowledgeBaseService knowledgeBaseService,
+            UserConfigService userConfigService,
+            WeChatUserService weChatUserService) {
         this.messageLogRepository = messageLogRepository;
         this.restTemplate = restTemplate;
         this.redisTemplate = redisTemplate;
@@ -73,6 +79,8 @@ public class WeChatService {
         this.siliconFlowService = siliconFlowService;
         this.formatFileService = formatFileService;
         this.knowledgeBaseService = knowledgeBaseService;
+        this.userConfigService = userConfigService;
+        this.weChatUserService = weChatUserService;
     }
 
     @PostConstruct
@@ -104,8 +112,8 @@ public class WeChatService {
             String event = messageMap.get("Event");
 
             if ("kf_msg_or_event".equals(event)) {
-                String msgToken = messageMap.get("Token");
-                this.syncAndProcessMessages(msgToken);
+                // 异步处理消息，防止阻塞微信回调
+                syncAndProcessMessages(); 
             } else {
                 logger.info("接收到非拉取类型的事件，忽略处理: {}", event);
             }
@@ -120,68 +128,73 @@ public class WeChatService {
         }
     }
     
+    /**
+     * 异步地、分页地拉取和处理消息。
+     * 该方法会从Redis读取上一次的游标，并仅处理最新的一条消息，然后保存新的游标。
+     */
     @Async
-    public void syncAndProcessMessages(String token) {
-        String accessToken = accessTokenManager.getAccessToken();
-        String url = "https://qyapi.weixin.qq.com/cgi-bin/kf/sync_msg?access_token=" + accessToken;
+    public void syncAndProcessMessages() {
+        // 从Redis中获取上次保存的游标
+        String cursor = redisTemplate.opsForValue().get(MSG_CURSOR_KEY);
+        
+        // 循环拉取，直到没有更多消息
+        while (true) {
+            String accessToken = accessTokenManager.getAccessToken();
+            String url = "https://qyapi.weixin.qq.com/cgi-bin/kf/sync_msg?access_token=" + accessToken;
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("token", token);
+            Map<String, Object> requestBody = new HashMap<>();
+            if (cursor != null) {
+                requestBody.put("cursor", cursor);
+            }
+        
+            try {
+                String response = restTemplate.postForObject(url, requestBody, String.class);
+                logger.debug("拉取消息响应(sync_msg): {}", response);
+                JsonNode root = objectMapper.readTree(response);
 
-        try {
-            String response = restTemplate.postForObject(url, requestBody, String.class);
-            logger.info("拉取消息响应(sync_msg): {}", response);
-            JsonNode root = objectMapper.readTree(response);
+                if (root.path("errcode").asInt() != 0) {
+                    logger.error("拉取消息(sync_msg)失败: {}", response);
+                    break; // 拉取失败，跳出循环
+                }
+                
+                // 获取新的游标并立即保存到Redis，无论本次是否处理了消息。
+                // 这是为了确保下次能从正确的位置开始拉取。
+                String nextCursor = root.path("next_cursor").asText(null);
+                if (nextCursor != null) {
+                    redisTemplate.opsForValue().set(MSG_CURSOR_KEY, nextCursor);
+                    cursor = nextCursor; // 更新当前游标，用于下一轮循环（如果has_more=1）
+                }
 
-            if (root.get("errcode").asInt() == 0 && root.has("msg_list")) {
-                JsonNode msgList = root.get("msg_list");
+                JsonNode msgList = root.path("msg_list");
+                
+                // 只处理最后一​​条消息
                 if (msgList.isArray() && !msgList.isEmpty()) {
-                    // 【最终修正】遍历列表，除了最后一条消息，其他的都只标记为已读，不进行回复
-                    for (int i = 0; i < msgList.size() - 1; i++) {
-                        markMessageAsProcessed(msgList.get(i));
-                    }
-                    // 只对最新的一条消息进行完整处理和回复
                     JsonNode latestMessage = msgList.get(msgList.size() - 1);
                     processSinglePulledMessage(latestMessage);
                 }
-                if (root.has("has_more") && root.get("has_more").asInt() == 1) {
-                    logger.warn("检测到还有更多分页消息，当前逻辑只处理第一页，如有需要可后续扩展分页逻辑。");
+
+                // 如果微信服务器明确告知没有更多消息了，就退出循环
+                if (root.path("has_more").asInt() == 0) {
+                    logger.info("没有更多消息，结束本次拉取。");
+                    break;
                 }
-            } else {
-                logger.error("拉取消息(sync_msg)失败: {}", response);
+
+            } catch (Exception e) {
+                logger.error("调用拉取消息(sync_msg)接口失败", e);
+                break; // 发生异常，跳出循环
             }
-        } catch (Exception e) {
-            logger.error("调用拉取消息(sync_msg)接口失败", e);
         }
     }
     
     /**
-     * 静默处理，仅标记消息为已读，不进行回复
-     */
-    private void markMessageAsProcessed(JsonNode msgNode) {
-        String msgId = msgNode.get("msgid").asText();
-        String redisKey = PROCESSED_MSG_ID_KEY_PREFIX + msgId;
-
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey)) || messageLogRepository.existsByMsgId(msgId)) {
-            return;
-        }
-        redisTemplate.opsForValue().set(redisKey, "processed", 48, TimeUnit.HOURS);
-        logger.info("静默处理：将历史消息 {} 标记为已读。", msgId);
-        
-        // 仍然记录日志，但使用特定内容以作区分
-        String msgType = msgNode.get("msgtype").asText();
-        String externalUserId = msgNode.has("external_userid") ? msgNode.get("external_userid").asText() :
-                (msgNode.has("event") && msgNode.get("event").has("external_userid") ? msgNode.get("event").get("external_userid").asText() : "UNKNOWN_USER");
-        String openKfid = msgNode.has("open_kfid") ? msgNode.get("open_kfid").asText() :
-                (msgNode.has("event") && msgNode.get("event").has("open_kfid") ? msgNode.get("event").get("open_kfid").asText() : "UNKNOWN_KFID");
-
-        saveMessageLog(msgId, externalUserId, openKfid, msgType, "[Auto-Marked as Read]");
-    }
-
-    /**
-     * 完整处理单个消息（通常是最新的消息）
+     * 处理单条从API拉取的消息。包含幂等性检查。
      */
     private void processSinglePulledMessage(JsonNode msgNode) {
+        // 对于事件类型的消息，如 "enter_session", "user_recall_msg"，它们没有 msgid，直接跳过
+        if (!msgNode.has("msgid")) {
+            return;
+        }
+
         String msgId = msgNode.get("msgid").asText();
         String redisKey = PROCESSED_MSG_ID_KEY_PREFIX + msgId;
     
@@ -197,6 +210,16 @@ public class WeChatService {
         String openKfid = msgNode.has("open_kfid") ? msgNode.get("open_kfid").asText() :
                 (msgNode.has("event") && msgNode.get("event").has("open_kfid") ? msgNode.get("event").get("open_kfid").asText() : "UNKNOWN_KFID");
     
+        if (!"UNKNOWN_USER".equals(externalUserId)) {
+            weChatUserService.getOrCreateUser(externalUserId);
+        }
+
+        // 检查用户是否被拉黑，这一步已在MessageDispatcher中实现，此处为双重保险
+        if(weChatUserService.isUserBlocked(externalUserId)) {
+             logger.info("用户 [{}] 已被拉黑，拒绝回复此消息: {}", externalUserId, msgId);
+             return;
+        }
+
         switch (msgType) {
             case "text":
                 handleTextMessage(msgNode, externalUserId, openKfid);
@@ -218,6 +241,8 @@ public class WeChatService {
         redisTemplate.opsForValue().set(redisKey, "processed", 48, TimeUnit.HOURS);
     }
     
+    // ... 其他所有方法 (handleTextMessage, sendReply 等) 保持不变，无需修改 ...
+    // ... [代码已折叠，请保留您原来的这些方法] ...
     private void handleTextMessage(JsonNode msgNode, String externalUserId, String openKfid) {
         String userContent = msgNode.get("text").get("content").asText().trim();
         saveMessageLog(msgNode.get("msgid").asText(), externalUserId, openKfid, "text", userContent);
@@ -239,7 +264,7 @@ public class WeChatService {
         if (downloadedMediaOpt.isPresent()) {
             File imageFile = downloadedMediaOpt.get().file();
             
-            Optional<String> descriptionOpt = siliconFlowService.analyzeImage(imageFile, "请详细描述这张图片的内容");
+            Optional<String> descriptionOpt = siliconFlowService.analyzeImage(imageFile, "请详细描述这张图片的内容", externalUserId);
             imageFile.delete(); 
 
             String replyContent;
@@ -278,7 +303,7 @@ public class WeChatService {
         }
     
         File mp3File = mp3FileOpt.get();
-        Optional<String> transcribedTextOpt = siliconFlowService.transcribeAudio(mp3File);
+        Optional<String> transcribedTextOpt = siliconFlowService.transcribeAudio(mp3File, externalUserId);
         mp3File.delete(); 
     
         if (transcribedTextOpt.isEmpty() || transcribedTextOpt.get().isBlank()) {

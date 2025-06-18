@@ -7,7 +7,7 @@ import xlike.top.kn_ai_chat.enums.MediaType;
 import xlike.top.kn_ai_chat.reply.Reply;
 import xlike.top.kn_ai_chat.reply.TextReply;
 import xlike.top.kn_ai_chat.reply.VoiceReply;
-import xlike.top.kn_ai_chat.service.*; // 导入所有service
+import xlike.top.kn_ai_chat.service.*;
 
 import java.io.File;
 import java.util.List;
@@ -46,13 +46,12 @@ public class AiMessageHandler implements MessageHandler {
             return Optional.of(new TextReply("抱歉，我暂时无法回答这个问题，请稍后再试。"));
         }
 
-        if (semanticService.getBooleanJudgement(content)) {
-            Optional<File> mp3FileOpt = siliconFlowService.generateSpeech(textReply);
+        if (semanticService.getBooleanJudgement(content, externalUserId)) {
+            Optional<File> mp3FileOpt = siliconFlowService.generateSpeech(textReply, externalUserId);
             
             if (mp3FileOpt.isPresent()) {
-                // ▼▼▼【核心修改】▼▼▼
                 Optional<File> amrFileOpt = formatFileService.convertToAmr(mp3FileOpt.get());
-                mp3FileOpt.get().delete(); // 删除原 MP3 文件
+                mp3FileOpt.get().delete();
 
                 if (amrFileOpt.isPresent()) {
                     Optional<String> mediaIdOpt = mediaService.uploadTemporaryMedia(amrFileOpt.get(), MediaType.VOICE);
@@ -61,7 +60,6 @@ public class AiMessageHandler implements MessageHandler {
                     }
                 }
             }
-            // 如果语音流程的任何一步失败，则降级为发送原始文本
         }
         
         return Optional.of(new TextReply(textReply));

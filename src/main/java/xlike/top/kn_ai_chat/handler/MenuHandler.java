@@ -4,27 +4,28 @@ import org.springframework.stereotype.Component;
 import xlike.top.kn_ai_chat.domain.MessageLog;
 import xlike.top.kn_ai_chat.reply.Reply;
 import xlike.top.kn_ai_chat.reply.TextReply;
+import xlike.top.kn_ai_chat.service.UserConfigService;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * 功能菜单处理器
- * <p>
- * 当用户发送 "菜单"、"功能"、"帮助" 等关键词时，
- * 返回一个格式化的文本，向用户展示所有可用的核心功能。
- *
  * @author Administrator
  */
 @Component
 public class MenuHandler implements MessageHandler {
 
-    private static final List<String> KEYWORDS = Arrays.asList("菜单", "功能", "帮助", "你能做什么", "help", "menu");
+    private final UserConfigService userConfigService;
+
+    public MenuHandler(UserConfigService userConfigService) {
+        this.userConfigService = userConfigService;
+    }
 
     @Override
     public boolean canHandle(String content) {
-        return KEYWORDS.stream().anyMatch(content::equalsIgnoreCase);
+        // 恢复 canHandle 的判断职责
+        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+        return keywords.stream().anyMatch(content::equalsIgnoreCase);
     }
 
     @Override
