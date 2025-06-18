@@ -18,7 +18,7 @@ import java.util.Optional;
 /**
  * 负责处理微信用户相关业务的服务.
  * 包括用户的创建、信息同步以及状态管理.
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class WeChatUserService {

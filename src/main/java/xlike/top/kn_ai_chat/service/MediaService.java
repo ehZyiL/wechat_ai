@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * 媒体素材服务
  * <p>
  * 负责与微信的临时素材接口进行交互，包括上传和下载。
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class MediaService {

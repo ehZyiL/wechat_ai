@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @Configuration
 public class WeChatConfig {

@@ -26,7 +26,7 @@ import java.util.List;
  * 文件内容读取器
  * <p>
  * 支持多种常见文件格式的文本内容提取。
- * @author Administrator
+ * @author xlike
  */
 public class FileContentReader {
 

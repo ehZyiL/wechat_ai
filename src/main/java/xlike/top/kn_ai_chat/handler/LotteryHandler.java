@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @Component
 public class LotteryHandler implements MessageHandler {

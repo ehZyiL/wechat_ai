@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * 知识库条目实体类
  * <p>
  * 用于存储用户上传的文件内容，实现用户隔离的知识库。
- * @author Administrator
+ * @author xlike
  */
 @Data
 @Entity

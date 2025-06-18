@@ -9,7 +9,7 @@ import xlike.top.kn_ai_chat.service.KnowledgeBaseService;
 import java.util.List;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @RestController
 @RequestMapping("/api/knowledge")

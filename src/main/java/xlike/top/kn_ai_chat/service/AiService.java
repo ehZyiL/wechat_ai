@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * 负责与大语言模型进行交互的服务.
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class AiService {

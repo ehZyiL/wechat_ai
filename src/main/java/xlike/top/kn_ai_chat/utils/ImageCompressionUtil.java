@@ -13,7 +13,7 @@ import java.util.Optional;
  * 图片压缩工具类
  * <p>
  * 使用 Thumbnailator 库来提供高效的图片压缩服务。
- * @author Administrator
+ * @author xlike
  */
 @Component
 public class ImageCompressionUtil {

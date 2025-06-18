@@ -16,7 +16,7 @@ import java.util.Optional;
  * 消息分发器.
  * 负责根据消息内容和处理器优先级，将消息路由到合适的MessageHandler进行处理.
  * 同时，在此处实现拉黑功能的前置检查.
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class MessageDispatcher {

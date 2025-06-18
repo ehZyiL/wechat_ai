@@ -7,7 +7,7 @@ import lombok.Getter;
  * <p>
  * 用于规范微信客服接口中 'type' 参数的取值。 
  * 使用枚举代替字符串，可以增强代码的类型安全性和可维护性。
- * @author Administrator
+ * @author xlike
  */
 @Getter
 public enum MediaType {

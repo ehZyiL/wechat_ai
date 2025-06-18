@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * XML解析工具类
- * @author Administrator
+ * @author xlike
  */
 public class XmlParseUtil {
 

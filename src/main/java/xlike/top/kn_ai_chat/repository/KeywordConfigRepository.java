@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 public interface KeywordConfigRepository extends JpaRepository<KeywordConfig, Long> {
     List<KeywordConfig> findByExternalUserId(String externalUserId);

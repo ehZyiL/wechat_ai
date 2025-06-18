@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class AccessTokenManager {

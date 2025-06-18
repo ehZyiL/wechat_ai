@@ -11,7 +11,7 @@ import java.util.Optional;
  * 消息处理器接口
  * 定义了处理微信消息的统一规范
  * 继承 Ordered 接口以支持排序
- * @author Administrator
+ * @author xlike
  */
 public interface MessageHandler extends Ordered {
 

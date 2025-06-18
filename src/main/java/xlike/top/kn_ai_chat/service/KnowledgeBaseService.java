@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * 知识库服务
  * <p>
  * 封装对用户知识库的所有操作。
- * @author Administrator
+ * @author xlike
  */
 @Service
 public class KnowledgeBaseService {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 public interface KnowledgeBaseRepository extends JpaRepository<Knowledge, Long> {
 

@@ -8,7 +8,7 @@ import xlike.top.kn_ai_chat.domain.MessageLog;
 import java.util.List;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 public interface MessageLogRepository extends JpaRepository<MessageLog, Long> {
 

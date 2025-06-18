@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @RestController
 @RequestMapping("/wechat")

@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Base64;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 public class WeChatUtils {
 
