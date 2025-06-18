@@ -29,9 +29,6 @@ wechat:
   corp-id: wwcd6541ab12081931
   secret: mUiltAEwGIHhE1tzMNMHAVbDz_d20F7UKT01sX1YdeI
   open-kfid: kfc5fa2f55aad562e06
-  push:
-    open-kfid: kfc5fa2f55aad562e06
-    external-user-id: wmKoYiHAAAPNwz8SWJsCTbDbIOaRECxg
 admin:
   password: "xlike"
 default:

@@ -21,7 +21,6 @@ public interface MessageLogRepository extends JpaRepository<MessageLog, Long> {
 
     long countByFromUserOrToUser(String fromUser, String toUser);
 
-    // ▼▼▼【新增方法】▼▼▼
     /**
      * 根据发送者ID，按时间倒序查询其发送的消息（分页）
      * @param fromUser 发送者ID

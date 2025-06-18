@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-folder-fill"></i> 文件管理</h1>
+        <a href="/admin/users" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回用户列表</a>
+    </div>
+    <div class="alert alert-info">
+        正在管理用户: <code th:text="${externalUserId}"></code> 的知识库文件
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>文件名</th>
+                        <th>上传时间</th>
+                        <th class="text-center">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="file-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const externalUserId = /*[[${externalUserId}]]*/ '';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (externalUserId) {
+            loadFiles();
+        }
+    });
+
+    async function loadFiles() {
+        const tableBody = document.getElementById('file-table-body');
+        try {
+            const response = await fetch(`/api/knowledge/${externalUserId}`);
+            if (response.status === 401) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error('获取文件列表失败');
+            }
+            const files = await response.json();
+            tableBody.innerHTML = ''; // 清空
+
+            if (files.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">该用户暂无知识库文件</td></tr>';
+                return;
+            }
+
+            files.forEach(file => {
+                const tr = document.createElement('tr');
+                const formattedDate = new Date(file.createdAt).toLocaleString('zh-CN');
+                tr.innerHTML = `
+                    <td>${file.id}</td>
+                    <td><i class="bi bi-file-earmark-text"></i> ${escapeHtml(file.fileName)}</td>
+                    <td>${formattedDate}</td>
+                    <td class="text-center">
+                        <button class="btn btn-danger btn-sm" onclick="deleteFile(${file.id})">
+                            <i class="bi bi-trash-fill"></i> 删除
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+        }
+    }
+
+    async function deleteFile(fileId) {
+        if (!confirm(`确定要删除 ID 为 ${fileId} 的文件吗？此操作不可逆！`)) {
+            return;
+        }
+        try {
+            // 注意：我们将 externalUserId作为查询参数传递
+            const response = await fetch(`/api/knowledge/${fileId}?externalUserId=${encodeURIComponent(externalUserId)}`, {
+                method: 'DELETE'
+            });
+
+            const resultText = await response.text();
+
+            if (response.ok) {
+                alert('删除成功！');
+                loadFiles(); // 刷新列表
+            } else {
+                throw new Error(resultText || '删除失败');
+            }
+        } catch(error) {
+            console.error('Error:', error);
+            alert(error.message);
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+</script>
+</body>
+</html>

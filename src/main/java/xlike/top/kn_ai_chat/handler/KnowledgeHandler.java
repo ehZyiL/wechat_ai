@@ -13,6 +13,9 @@ import xlike.top.kn_ai_chat.service.UserConfigService;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author Administrator
+ */
 @Component
 public class KnowledgeHandler implements MessageHandler {
 

@@ -25,12 +25,6 @@ public class LotteryService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // 彩票号码
-    private static final Set<String> MY_NUMBERS_FRONT = new HashSet<>(Arrays.asList("01", "06", "12", "14", "25"));
-    private static final Set<String> MY_NUMBERS_BACK = new HashSet<>(Arrays.asList("09", "11"));
-    private static final Set<String> MY_NUMBERS_RED = new HashSet<>(Arrays.asList("01", "06", "12", "14", "25", "09"));
-    private static final String MY_NUMBER_BLUE = "11";
-
     // API 地址
     private static final String DLT_API = "http://api.huiniao.top/interface/home/lotteryHistory?type=dlt&page=1&limit=1";
     private static final String SSQ_API = "http://api.huiniao.top/interface/home/lotteryHistory?type=ssq&page=1&limit=1";
@@ -58,7 +52,6 @@ public class LotteryService {
             String drawDateStr = lastDraw.get("day").asText();
             LocalDate drawDate = LocalDate.parse(drawDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-            // ▼▼▼【核心修改】▼▼▼
             // 检查开奖日期是否是今天，如果不是，则返回一个空的Optional，表示“没有结果”
             if (!drawDate.equals(LocalDate.now())) {
                 return Optional.empty();
@@ -73,7 +66,12 @@ public class LotteryService {
         }
     }
 
-    // formatLotteryMessage 和 checkWin 方法保持不变...
+    /**
+     * 【修改】格式化彩票信息，只包含官方开奖结果
+     * @param drawData 开奖数据节点
+     * @param lotteryType 彩票类型
+     * @return 格式化后的公告字符串
+     */
     private String formatLotteryMessage(JsonNode drawData, String lotteryType) {
         String code = drawData.get("code").asText();
         String day = drawData.get("day").asText();
@@ -84,19 +82,16 @@ public class LotteryService {
                 drawData.get("four").asText(), drawData.get("five").asText()
             };
             String[] backDraw = {drawData.get("six").asText(), drawData.get("seven").asText()};
-            String prize = checkDltWin(new HashSet<>(Arrays.asList(frontDraw)), new HashSet<>(Arrays.asList(backDraw)));
 
             return String.format(
                 "🎉 大乐透 开奖公告 🎉\n\n" +
                 "期号：%s\n" +
-                "日期：%s\n" +
-                "开奖号码：\n前区: %s\n后区: %s\n\n" +
-                "我的号码：\n前区: %s\n后区: %s\n\n" +
-                "结果：%s",
+                "日期：%s\n\n" +
+                "开奖号码：\n" +
+                "前区: %s\n" +
+                "后区: %s",
                 code, day,
-                String.join(", ", frontDraw), String.join(", ", backDraw),
-                String.join(", ", MY_NUMBERS_FRONT), String.join(", ", MY_NUMBERS_BACK),
-                prize
+                String.join(", ", frontDraw), String.join(", ", backDraw)
             );
         } else { // SSQ
             String[] redDraw = {
@@ -104,51 +99,17 @@ public class LotteryService {
                 drawData.get("four").asText(), drawData.get("five").asText(), drawData.get("six").asText()
             };
             String blueDraw = drawData.get("seven").asText();
-            String prize = checkSsqWin(new HashSet<>(Arrays.asList(redDraw)), blueDraw);
 
             return String.format(
                 "🎉 双色球 开奖公告 🎉\n\n" +
                 "期号：%s\n" +
-                "日期：%s\n" +
-                "开奖号码：\n红球: %s\n蓝球: %s\n\n" +
-                "我的号码：\n红球: %s\n蓝球: %s\n\n" +
-                "结果：%s",
+                "日期：%s\n\n" +
+                "开奖号码：\n" +
+                "红球: %s\n" +
+                "蓝球: %s",
                 code, day,
-                String.join(", ", redDraw), blueDraw,
-                String.join(", ", MY_NUMBERS_RED), MY_NUMBER_BLUE,
-                prize
+                String.join(", ", redDraw), blueDraw
             );
         }
-    }
-
-    private String checkDltWin(Set<String> frontDraw, Set<String> backDraw) {
-        long frontMatch = MY_NUMBERS_FRONT.stream().filter(frontDraw::contains).count();
-        long backMatch = MY_NUMBERS_BACK.stream().filter(backDraw::contains).count();
-
-        if (frontMatch == 5 && backMatch == 2) return "一等奖";
-        if (frontMatch == 5 && backMatch == 1) return "二等奖";
-        if (frontMatch == 5 && backMatch == 0) return "三等奖";
-        if (frontMatch == 4 && backMatch == 2) return "四等奖";
-        if (frontMatch == 4 && backMatch == 1) return "五等奖";
-        if (frontMatch == 3 && backMatch == 2) return "六等奖";
-        if (frontMatch == 4 && backMatch == 0) return "七等奖";
-        if ((frontMatch == 3 && backMatch == 1) || (frontMatch == 2 && backMatch == 2)) return "八等奖";
-        if ((frontMatch == 3 && backMatch == 0) || (frontMatch == 1 && backMatch == 2) || (frontMatch == 2 && backMatch == 1) || (frontMatch == 0 && backMatch == 2)) return "九等奖";
-        
-        return "很遗憾，未中奖，再接再厉！";
-    }
-
-    private String checkSsqWin(Set<String> redDraw, String blueDraw) {
-        long redMatch = MY_NUMBERS_RED.stream().filter(redDraw::contains).count();
-        boolean blueMatch = MY_NUMBER_BLUE.equals(blueDraw);
-
-        if (redMatch == 6 && blueMatch) return "一等奖";
-        if (redMatch == 6 && !blueMatch) return "二等奖";
-        if (redMatch == 5 && blueMatch) return "三等奖";
-        if ((redMatch == 5 && !blueMatch) || (redMatch == 4 && blueMatch)) return "四等奖";
-        if ((redMatch == 4 && !blueMatch) || (redMatch == 3 && blueMatch)) return "五等奖";
-        if ((redMatch == 2 && blueMatch) || (redMatch == 1 && blueMatch) || (redMatch == 0 && blueMatch)) return "六等奖";
-
-        return "很遗憾，未中奖，再接再厉！";
     }
 }

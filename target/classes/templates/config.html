@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 助手配置中心</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        /* --- 全局美化 --- */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            color: #333;
+        }
+
+        /* --- 标题样式 --- */
+        .app-title {
+            font-weight: bold;
+            color: #1a2a4c;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* --- 主卡片容器 --- */
+        .main-card {
+            border: none;
+            border-radius: 15px;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .main-card:hover {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* --- Tab 导航 --- */
+        .nav-tabs .nav-link {
+            color: #555;
+            font-weight: 500;
+            border-width: 0 0 3px 0;
+            border-color: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link.active,
+        .nav-tabs .nav-item.show .nav-link {
+            color: #0d6efd;
+            background-color: transparent;
+            border-color: #0d6efd;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+
+        /* --- 表单元素 --- */
+        .form-label {
+            font-weight: 600;
+            color: #1a2a4c;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        .form-control:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+        }
+
+        /* --- 标题和按钮 --- */
+        .section-title {
+            color: #1a2a4c;
+            border-left: 4px solid #0d6efd;
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-sub-title {
+            color: #34495e;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-outline-secondary {
+            transition: all 0.3s ease;
+        }
+
+        /* --- 关键词配置区域 --- */
+        .keyword-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .handler-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .sub-handler-label {
+            font-size: 1rem;
+            color: #495057;
+        }
+
+        /* --- 状态消息 --- */
+        #statusMessage {
+            transition: all 0.5s ease;
+        }
+
+        /* --- 加载动画 --- */
+        .loader {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<div class="container my-5">
+    <h1 class="text-center mb-4 app-title"><i class="bi bi-robot"></i> AI 助手配置中心</h1>
+    <div class="card shadow-lg p-md-4 mb-5 bg-white rounded main-card">
+        <div class="card-body">
+            <form id="configForm">
+                <div class="mb-4">
+                    <label for="externalUserId" class="form-label"><i class="bi bi-person-badge"></i> 用户 ID (External User ID)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入您的用户ID" required>
+                        <button class="btn btn-secondary" type="button" id="loadConfigBtn">加载配置</button>
+                    </div>
+                </div>
+
+                <ul class="nav nav-tabs mb-3" id="configTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ai-config-tab" data-bs-toggle="tab" data-bs-target="#ai-config" type="button" role="tab" aria-controls="ai-config" aria-selected="true"><i class="bi bi-cpu"></i> AI 模型配置</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="keyword-config-tab" data-bs-toggle="tab" data-bs-target="#keyword-config" type="button" role="tab" aria-controls="keyword-config" aria-selected="false"><i class="bi bi-key"></i> 关键词配置</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="configTabsContent">
+                    <div class="tab-pane fade show active" id="ai-config" role="tabpanel" aria-labelledby="ai-config-tab">
+                        <h3 class="mb-4 section-title">核心模型配置</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="aiBaseUrl" class="form-label">AI API 基础地址</label>
+                                <input type="url" class="form-control" id="aiBaseUrl" name="aiBaseUrl" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="aiModel" class="form-label">AI 模型名称</label>
+                                <input type="text" class="form-control" id="aiModel" name="aiModel" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="aiApiKey" class="form-label">AI API 密钥</label>
+                            <input type="password" class="form-control" id="aiApiKey" name="aiApiKey" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="systemPrompt" class="form-label">系统提示词 (System Prompt)</label>
+                            <textarea class="form-control" id="systemPrompt" name="systemPrompt" rows="4" required></textarea>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h3 class="section-title">多媒体模型配置 (SiliconFlow)</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sfBaseUrl" class="form-label">SiliconFlow 基础地址</label>
+                                <input type="url" class="form-control" id="sfBaseUrl" name="sfBaseUrl" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sfImageModel" class="form-label">绘画模型</label>
+                                <input type="text" class="form-control" id="sfImageModel" name="sfImageModel" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sfTtsModel" class="form-label">文本转语音 (TTS) 模型</label>
+                                <input type="text" class="form-control" id="sfTtsModel" name="sfTtsModel" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sfSttModel" class="form-label">语音转文本 (ASR) 模型</label>
+                                <input type="text" class="form-control" id="sfSttModel" name="sfSttModel" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sfVoice" class="form-label">TTS 音色 ID</label>
+                                <input type="text" class="form-control" id="sfVoice" name="sfVoice" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sfVlmModel" class="form-label">视觉大语言模型 (VLM)</label>
+                                <input type="text" class="form-control" id="sfVlmModel" name="sfVlmModel" required>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100 mt-3" onclick="saveAiConfig()"><i class="bi bi-save"></i> 保存 AI 配置</button>
+                    </div>
+
+                    <div class="tab-pane fade" id="keyword-config" role="tabpanel" aria-labelledby="keyword-config-tab">
+                        <h3 class="mb-3 section-title">功能关键词配置</h3>
+                        <p class="text-muted">请用英文逗号 (,) 分隔每个关键词，例如: 关键词1,关键词2</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4 keyword-section">
+                                    <label for="DrawingHandler" class="form-label handler-label">绘画</label>
+                                    <input type="text" class="form-control keyword-input" id="DrawingHandler" data-handler="DrawingHandler" placeholder="例如: 画,绘画,drawing">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('DrawingHandler')">保存</button>
+                                </div>
+                                <div class="mb-4 keyword-section">
+                                    <label for="LotteryHandler" class="form-label handler-label">彩票</label>
+                                    <input type="text" class="form-control keyword-input" id="LotteryHandler" data-handler="LotteryHandler" placeholder="例如: 大乐透,双色球,开奖">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('LotteryHandler')">保存</button>
+                                </div>
+                                <div class="mb-4 keyword-section">
+                                    <label for="MenuHandler" class="form-label handler-label">菜单</label>
+                                    <input type="text" class="form-control keyword-input" id="MenuHandler" data-handler="MenuHandler" placeholder="例如: 菜单,帮助,help">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('MenuHandler')">保存</button>
+                                </div>
+                                <div class="mb-4 keyword-section">
+                                    <label for="VoiceReplyHandler" class="form-label handler-label">语音回复</label>
+                                    <input type="text" class="form-control keyword-input" id="VoiceReplyHandler" data-handler="VoiceReplyHandler" placeholder="例如: 语音回答,用嘴说">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('VoiceReplyHandler')">保存</button>
+                                </div>
+                                <div class="mb-4 keyword-section">
+                                    <label for="KnowledgeHandler" class="form-label handler-label">知识库问答</label>
+                                    <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('KnowledgeHandler')">保存</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4 keyword-section">
+                                    <label class="form-label handler-label">系统指令</label>
+                                    <p class="text-muted small">系统指令的关键词已拆分:</p>
+                                    <div class="ms-3">
+                                        <div class="mb-3">
+                                            <label for="SystemHandler_ClearHistory" class="form-label sub-handler-label">清空历史对话</label>
+                                            <input type="text" class="form-control keyword-input" id="SystemHandler_ClearHistory" data-handler="SystemHandler_ClearHistory">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_ClearHistory')">保存</button>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="SystemHandler_QueryId" class="form-label sub-handler-label">查询ID</label>
+                                            <input type="text" class="form-control keyword-input" id="SystemHandler_QueryId" data-handler="SystemHandler_QueryId">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_QueryId')">保存</button>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="SystemHandler_ChatStats" class="form-label sub-handler-label">对话统计</label>
+                                            <input type="text" class="form-control keyword-input" id="SystemHandler_ChatStats" data-handler="SystemHandler_ChatStats">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_ChatStats')">保存</button>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="SystemHandler_UserQuestions" class="form-label sub-handler-label">用户提问记录</label>
+                                            <input type="text" class="form-control keyword-input" id="SystemHandler_UserQuestions" data-handler="SystemHandler_UserQuestions">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="saveKeywords('SystemHandler_UserQuestions')">保存</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div id="statusMessage" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const API_BASE_URL = '/api/config';
+    const loader = document.getElementById('loader');
+
+    /**
+     * 显示加载动画
+     */
+    function showLoader() {
+        loader.style.display = 'block';
+    }
+
+    /**
+     * 隐藏加载动画
+     */
+    function hideLoader() {
+        loader.style.display = 'none';
+    }
+
+    /**
+     * 显示状态消息
+     * @param {string} message - 要显示的消息
+     * @param {boolean} isError - 是否为错误消息
+     */
+    function showStatusMessage(message, isError = false) {
+        const statusDiv = document.getElementById('statusMessage');
+        const alertClass = isError ? 'alert-danger' : 'alert-success';
+        statusDiv.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                                ${message}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                             </div>`;
+    }
+
+    /**
+     * 加载AI配置
+     * @param {string} userId - 用户ID
+     */
+    async function loadAiConfig(userId) {
+        if (!userId) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai/${userId}`);
+            if (!response.ok) {
+                throw new Error(`无法加载AI配置: ${response.statusText}`);
+            }
+            const config = await response.json();
+
+            // 填充表单
+            for (const key in config) {
+                if (document.getElementById(key)) {
+                    document.getElementById(key).value = config[key];
+                }
+            }
+        } catch (error) {
+            showStatusMessage(`加载AI配置失败: ${error.message}`, true);
+        }
+    }
+
+    /**
+     * 加载所有关键词配置
+     * @param {string} userId - 用户ID
+     */
+    async function loadAllKeywords(userId) {
+        if (!userId) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/keywords/${userId}`);
+            if (!response.ok) {
+                throw new Error(`无法加载关键词配置: ${response.statusText}`);
+            }
+            const keywordsMap = await response.json();
+
+            // 填充所有关键词输入框
+            for (const handlerName in keywordsMap) {
+                const inputElement = document.getElementById(handlerName);
+                if (inputElement) {
+                    inputElement.value = keywordsMap[handlerName].join(',');
+                }
+            }
+        } catch (error) {
+            showStatusMessage(`加载关键词失败: ${error.message}`, true);
+        }
+    }
+
+    /**
+     * 统一加载所有配置
+     */
+    async function loadAllConfigs() {
+        const userId = document.getElementById('externalUserId').value.trim();
+        if (!userId) {
+            showStatusMessage("请输入用户ID以加载配置。", true);
+            return;
+        }
+        showLoader();
+        await Promise.all([
+            loadAiConfig(userId),
+            loadAllKeywords(userId)
+        ]);
+        hideLoader();
+        showStatusMessage("配置已成功加载！", false);
+    }
+
+
+    /**
+     * 保存AI配置
+     */
+    async function saveAiConfig() {
+        const form = document.getElementById('configForm');
+        const formData = new FormData(form);
+        const configData = {};
+        formData.forEach((value, key) => {
+            configData[key] = value;
+        });
+
+        const userId = configData.externalUserId.trim();
+        if (!userId) {
+            showStatusMessage("用户ID不能为空！", true);
+            return;
+        }
+
+        showLoader();
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(configData),
+            });
+
+            if (!response.ok) {
+                throw new Error(`保存失败: ${response.statusText}`);
+            }
+            showStatusMessage('AI 配置已成功保存！', false);
+        } catch (error) {
+            showStatusMessage(`保存AI配置时出错: ${error.message}`, true);
+        } finally {
+            hideLoader();
+        }
+    }
+
+    /**
+     * 保存指定处理器的关键词
+     * @param {string} handlerName - 处理器名称
+     */
+    async function saveKeywords(handlerName) {
+        const userId = document.getElementById('externalUserId').value.trim();
+        if (!userId) {
+            showStatusMessage("保存关键词前，请输入用户ID！", true);
+            return;
+        }
+
+        const inputElement = document.getElementById(handlerName);
+        // 将关键词字符串按逗号分割，并去除每个关键词前后的空格
+        const keywords = inputElement.value.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0);
+
+        showLoader();
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/keywords?externalUserId=${encodeURIComponent(userId)}&handlerName=${encodeURIComponent(handlerName)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(keywords),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`保存失败: ${errorData.message || response.statusText}`);
+            }
+            showStatusMessage(`'${handlerName}' 的关键词已成功保存！`, false);
+        } catch (error) {
+            showStatusMessage(`保存关键词时出错: ${error.message}`, true);
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // 页面加载完成后执行的逻辑
+    document.addEventListener('DOMContentLoaded', () => {
+        // 如果URL中已有userId，则自动加载
+        const userIdInput = document.getElementById('externalUserId');
+        if (userIdInput.value) {
+            loadAllConfigs();
+        }
+
+        // 为加载按钮添加事件监听器
+        document.getElementById('loadConfigBtn').addEventListener('click', loadAllConfigs);
+    });
+
+</script>
+
+</body>
+</html>
