@@ -3,6 +3,7 @@ package xlike.top.kn_ai_chat.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import xlike.top.kn_ai_chat.domain.Knowledge;
 import xlike.top.kn_ai_chat.repository.KnowledgeBaseRepository;
 import xlike.top.kn_ai_chat.utils.FileContentReader;
@@ -63,7 +64,7 @@ public class KnowledgeBaseService {
     }
 
     /**
-     * 【修改】直接返回知识库条目列表，供API使用
+     * 直接返回知识库条目列表，供API使用
      *
      * @param externalUserId 用户ID
      * @return 知识库条目列表
@@ -73,7 +74,7 @@ public class KnowledgeBaseService {
     }
     
     /**
-     * 【新增】获取格式化后的文件列表字符串，供聊天机器人使用
+     * 获取格式化后的文件列表字符串，供聊天机器人使用
      *
      * @param externalUserId 用户ID
      * @return 格式化后的文件列表字符串
@@ -97,7 +98,7 @@ public class KnowledgeBaseService {
 
 
     /**
-     * 为指定用户删除一个知识库文件
+     * 为指定用户删除一个知识库文件（供聊天机器人调用）
      *
      * @param id             文件ID
      * @param externalUserId 用户ID
@@ -117,13 +118,14 @@ public class KnowledgeBaseService {
 
 
     /**
-     * 【新增方法】为指定用户删除所有知识库文件
+     * 为指定用户删除所有知识库文件（供聊天机器人调用）
      *
      * @param externalUserId 用户ID
      * @return 操作结果的描述文本
      */
     public String deleteAllFilesForUser(String externalUserId) {
         try {
+            // 注意：这个操作需要你的Repository中有 deleteByExternalUserId 方法
             repository.deleteByExternalUserId(externalUserId);
             logger.info("用户 [{}] 的所有知识库文件已被删除。", externalUserId);
             return "✅ 已清空您的个人知识库中的所有文件。";
@@ -133,6 +135,18 @@ public class KnowledgeBaseService {
         }
     }
 
+    /**
+     * 【新增方法】根据用户ID删除其所有的知识库记录（供管理后台调用）
+     * 此方法应在一个事务中被调用，且不返回用户提示信息。
+     * @param externalUserId 用户的 externalUserId
+     */
+    @Transactional
+    public void deleteKnowledgeByUserId(String externalUserId) {
+        logger.info("请求删除用户 [{}] 的所有知识库记录...", externalUserId);
+        // 此操作依赖于Repository中的`deleteByExternalUserId`方法
+        repository.deleteByExternalUserId(externalUserId);
+        logger.info("删除用户 [{}] 知识库记录的操作已执行。", externalUserId);
+    }
 
 
     /**

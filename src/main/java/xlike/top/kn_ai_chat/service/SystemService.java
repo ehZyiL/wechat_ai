@@ -49,7 +49,15 @@ public class SystemService {
         }
     }
 
-    // ▼▼▼【新增方法】▼▼▼
+    /**
+     * 【新增】获取指定用户发送的消息总数
+     * @param userId 用户的 externalUserId
+     * @return 该用户发送的消息总数
+     */
+    public long countQuestionsFromUser(String userId) {
+        return messageLogRepository.countByFromUser(userId);
+    }
+
     /**
      * 获取指定用户最近的提问记录
      * @param userId 用户的 externalUserId
@@ -57,7 +65,7 @@ public class SystemService {
      */
     public String getUserQuestions(String userId) {
         try {
-            // 查询最近的5条提问记录
+            // 查询最近的10条提问记录
             List<MessageLog> userMessages = messageLogRepository.findByFromUserOrderByTimestampDesc(userId, PageRequest.of(0, 10));
             if (userMessages.isEmpty()) {
                 return "您还没有问过任何问题。";

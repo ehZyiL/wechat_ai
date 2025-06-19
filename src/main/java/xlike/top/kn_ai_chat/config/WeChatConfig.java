@@ -18,8 +18,8 @@ public class WeChatConfig {
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         RestTemplate restTemplate = builder
-                .connectTimeout(Duration.ofSeconds(30))
-                .readTimeout(Duration.ofSeconds(30))
+                .connectTimeout(Duration.ofSeconds(60))
+                .readTimeout(Duration.ofSeconds(60))
                 .build();
 
         restTemplate.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));

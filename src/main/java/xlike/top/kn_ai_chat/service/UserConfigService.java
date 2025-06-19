@@ -50,7 +50,7 @@ public class UserConfigService {
     private String defaultSfVlmModel;
     
     // 隐藏和追加的固定提示词
-    private static final String JSON_STRUCTURE_PROMPT = " 你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{\"answer\":{\"reply_text:'你好啊'}}],严格使用我的json结构。";
+    private static final String JSON_STRUCTURE_PROMPT = " 你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{\"answer\":{\"reply_text:'你好啊'}}],严格使用我的json结构，并且reply_text对应的内容不能超过2000字数。";
 
 
     // Default Keywords. Using more specific names for SystemHandler's sub-commands

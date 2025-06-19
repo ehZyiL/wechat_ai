@@ -43,7 +43,7 @@ public class SemanticService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(aiConfig.getAiApiKey());
 
-        Map<String, String> assistantMessage = Map.of("role", "assistant", "content", JUDGMENT_PROMPT + "{" + userInput + "}");
+        Map<String, String> assistantMessage = Map.of("role", "system", "content", JUDGMENT_PROMPT + "{" + userInput + "}");
         Map<String, String> userMessage = Map.of("role", "user", "content", userInput);
         List<Map<String, String>> messages = Arrays.asList(assistantMessage, userMessage);
 
