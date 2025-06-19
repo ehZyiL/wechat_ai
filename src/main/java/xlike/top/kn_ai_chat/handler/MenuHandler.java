@@ -21,10 +21,12 @@ public class MenuHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
+    /**
+     * 修改了方法签名，并将 "default" 替换为 externalUserId
+     */
     @Override
-    public boolean canHandle(String content) {
-        // 恢复 canHandle 的判断职责
-        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+    public boolean canHandle(String content, String externalUserId) {
+        List<String> keywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());
         return keywords.stream().anyMatch(content::equalsIgnoreCase);
     }
 

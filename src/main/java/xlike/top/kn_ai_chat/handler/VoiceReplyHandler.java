@@ -36,22 +36,26 @@ public class VoiceReplyHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
+    /**
+     * 修改了方法签名，并将 "default" 替换为 externalUserId
+     */
     @Override
-    public boolean canHandle(String content) {
-        // 判断消息是否包含任意一个“语音”关键词
-        return userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName())
+    public boolean canHandle(String content, String externalUserId) {
+        return userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName())
                 .stream()
                 .anyMatch(content::contains);
     }
 
+    /**
+     * 修改了 handle 方法，将 "default" 替换为 externalUserId
+     */
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
-        List<String> triggerKeywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+        List<String> triggerKeywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());
         
         String actualQuery = content;
         String foundKeyword = "";
 
-        // 找到触发的关键词，并从内容中移除，得到真正的问题
         for (String keyword : triggerKeywords) {
             if (content.contains(keyword)) {
                 foundKeyword = keyword;
@@ -66,7 +70,6 @@ public class VoiceReplyHandler implements MessageHandler {
 
         logger.info("接收到强制语音回复指令，关键词: '{}', 问题: {}", foundKeyword, actualQuery);
 
-        // 创建一个新的历史记录副本，并将最后一个问题修正为移除关键词后的内容
         List<MessageLog> queryHistory = new java.util.ArrayList<>(history);
         if (!queryHistory.isEmpty()) {
             queryHistory.get(queryHistory.size() - 1).setContent(actualQuery);

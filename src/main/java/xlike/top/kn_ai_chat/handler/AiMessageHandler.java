@@ -33,8 +33,11 @@ public class AiMessageHandler implements MessageHandler {
         this.formatFileService = formatFileService;
     }
 
+    /**
+     * 修改了方法签名以符合接口定义
+     */
     @Override
-    public boolean canHandle(String content) {
+    public boolean canHandle(String content, String externalUserId) {
         return true;
     }
 
@@ -55,6 +58,7 @@ public class AiMessageHandler implements MessageHandler {
 
                 if (amrFileOpt.isPresent()) {
                     Optional<String> mediaIdOpt = mediaService.uploadTemporaryMedia(amrFileOpt.get(), MediaType.VOICE);
+                    amrFileOpt.get().delete(); // 确保 amr 文件也被删除
                     if (mediaIdOpt.isPresent()) {
                         return Optional.of(new VoiceReply(mediaIdOpt.get()));
                     }

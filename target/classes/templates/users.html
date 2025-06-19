@@ -14,6 +14,7 @@
         .status-active { color: #198754; font-weight: bold; }
         .action-buttons .btn {
             margin-right: 5px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -33,6 +34,7 @@
                         <th>昵称</th>
                         <th>用户ID (ExternalUserID)</th>
                         <th>状态</th>
+                        <th class="text-center">共计提问次数</th>
                         <th class="text-center">操作</th>
                     </tr>
                     </thead>
@@ -53,22 +55,23 @@
         try {
             const response = await fetch('/admin/api/users');
             if (response.status === 401) {
-                window.location.href = '/admin/login'; // 未授权则跳转到登录页
+                window.location.href = '/admin/login';
                 return;
             }
             if (!response.ok) {
                 throw new Error('获取用户列表失败');
             }
-            const users = await response.json();
+            const userStats = await response.json();
             const tableBody = document.getElementById('user-table-body');
-            tableBody.innerHTML = ''; // 清空现有内容
+            tableBody.innerHTML = '';
 
-            if (users.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无用户数据</td></tr>';
+            if (userStats.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>';
                 return;
             }
 
-            users.forEach(user => {
+            userStats.forEach(dto => {
+                const user = dto.user;
                 const tr = document.createElement('tr');
                 const statusClass = user.blocked ? 'status-blocked' : 'status-active';
                 const statusText = user.blocked ? '已拉黑' : '正常';
@@ -77,12 +80,13 @@
                 const blockButtonIcon = user.blocked ? 'bi-check-circle' : 'bi-slash-circle';
                 const actionUrl = user.blocked ? `/admin/api/users/${user.externalUserId}/unblock` : `/admin/api/users/${user.externalUserId}/block`;
 
-                // --- 【核心修改】在 tr.innerHTML 中增加了“文件管理”按钮 ---
+                // --- 【核心修改】在操作列增加 “删除用户” 按钮 ---
                 tr.innerHTML = `
                     <td><img src="${user.avatar || 'https://via.placeholder.com/40'}" alt="avatar" class="avatar"></td>
                     <td>${escapeHtml(user.nickname) || 'N/A'}</td>
                     <td><code>${escapeHtml(user.externalUserId)}</code></td>
                     <td><span class="${statusClass}">${statusText}</span></td>
+                    <td class="text-center">${dto.totalQuestions}</td>
                     <td class="text-center action-buttons">
                         <button class="btn ${blockButtonClass} btn-sm" onclick="toggleBlock('${actionUrl}')">
                             <i class="${blockButtonIcon}"></i> ${blockButtonText}
@@ -93,6 +97,12 @@
                         <a href="/files?externalUserId=${encodeURIComponent(user.externalUserId)}" class="btn btn-warning btn-sm">
                             <i class="bi bi-folder-symlink"></i> 文件管理
                         </a>
+                        <button class="btn btn-dark btn-sm" onclick="clearHistory('${escapeHtml(user.externalUserId)}')">
+                            <i class="bi bi-eraser-fill"></i> 清除历史
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser('${escapeHtml(user.externalUserId)}')">
+                            <i class="bi bi-trash-fill"></i> 删除用户
+                        </button>
                     </td>
                 `;
                 // --- 修改结束 ---
@@ -103,10 +113,11 @@
         } catch (error) {
             console.error('Error:', error);
             const tableBody = document.getElementById('user-table-body');
-            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">加载失败: ${error.message}</td></tr>`;
         }
     }
 
+    // ... (toggleBlock 和 clearHistory 函数保持不变) ...
     async function toggleBlock(url) {
         if (!confirm('确定要执行此操作吗？')) {
             return;
@@ -122,6 +133,52 @@
         } catch(error) {
             console.error('Error:', error);
             alert(error.message);
+        }
+    }
+
+    async function clearHistory(userId) {
+        if (!confirm(`确定要清除用户 ${userId} 的所有对话记录吗？此操作不可逆！`)) {
+            return;
+        }
+        try {
+            const response = await fetch(`/admin/api/users/${userId}/clear-history`, { method: 'POST' });
+            if (response.ok) {
+                alert('历史记录已清除！');
+                loadUsers(); // 刷新列表以更新提问次数
+            } else {
+                const errorText = await response.text();
+                throw new Error(errorText || '操作失败');
+            }
+        } catch(error) {
+            console.error('Error:', error);
+            alert(error.message);
+        }
+    }
+
+
+    /**
+     * 【新增】删除用户的函数
+     */
+    async function deleteUser(userId) {
+        if (!confirm(`【高危操作】你确定要永久删除用户 ${userId} 吗？`)) {
+            return;
+        }
+        if (!confirm(`此操作将删除该用户的所有对话记录、知识库文件、个人配置，且无法恢复！请再次确认！`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/api/users/${userId}`, { method: 'DELETE' });
+            if (response.ok) {
+                alert('用户及其所有数据已成功删除！');
+                loadUsers(); // Refresh the list
+            } else {
+                const errorText = await response.text();
+                throw new Error(errorText || '删除失败');
+            }
+        } catch(error) {
+            console.error('Error:', error);
+            alert('删除操作失败: ' + error.message);
         }
     }
 

@@ -2,7 +2,7 @@ package xlike.top.kn_ai_chat.handler;
 
 import org.springframework.core.Ordered;
 import xlike.top.kn_ai_chat.domain.MessageLog;
-import xlike.top.kn_ai_chat.reply.Reply; // <-- 导入Reply
+import xlike.top.kn_ai_chat.reply.Reply;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +18,10 @@ public interface MessageHandler extends Ordered {
     /**
      * 判断当前处理器是否能够处理这条消息
      * @param content 消息内容
+     * @param externalUserId 发送消息的用户ID
      * @return 如果能处理，返回 true，否则 false
      */
-    boolean canHandle(String content);
+    boolean canHandle(String content, String externalUserId);
 
     /**
      * 处理消息并返回一个 Reply 对象

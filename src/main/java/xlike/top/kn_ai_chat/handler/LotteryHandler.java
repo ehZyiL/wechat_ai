@@ -25,18 +25,22 @@ public class LotteryHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
+    /**
+     * 修改了方法签名，并将 "default" 替换为 externalUserId
+     */
     @Override
-    public boolean canHandle(String content) {
-        // 恢复 canHandle 的判断职责
-        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+    public boolean canHandle(String content, String externalUserId) {
+        List<String> keywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());
         return keywords.stream().anyMatch(content::contains);
     }
 
+    /**
+     * 修改了 handle 方法，将 "default" 替换为 externalUserId
+     */
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
         List<String> results = new ArrayList<>();
-        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
-
+        List<String> keywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());
 
         if (content.contains("大乐透") || (!content.contains("双色球") && keywords.contains("查彩票"))) {
             lotteryService.getLotteryResult("dlt").ifPresent(results::add);

@@ -25,7 +25,6 @@ public class KnowledgeHandler implements MessageHandler {
     private final AiService aiService;
     private final UserConfigService userConfigService;
 
-    // 指令是固定的，不通过关键词配置
     private static final String LIST_COMMAND = "列出文件";
     private static final String DELETE_COMMAND_PREFIX = "删除文件 ";
     private static final String DELETE_ALL_COMMAND = "删除所有文件";
@@ -36,28 +35,27 @@ public class KnowledgeHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
+    /**
+     * 修改了方法签名，并将 "default" 替换为 externalUserId
+     */
     @Override
-    public boolean canHandle(String content) {
+    public boolean canHandle(String content, String externalUserId) {
         String lowerCaseContent = content.toLowerCase();
         
-        // 1. 检查是否为知识库管理指令
         if (lowerCaseContent.equals(LIST_COMMAND.toLowerCase()) ||
             lowerCaseContent.startsWith(DELETE_COMMAND_PREFIX.toLowerCase()) ||
             lowerCaseContent.equalsIgnoreCase(DELETE_ALL_COMMAND)) {
             return true;
         }
         
-        // 2. 检查是否包含触发RAG问答的关键词
-        List<String> keywords = userConfigService.getKeywordsForHandler("default", this.getClass().getSimpleName());
+        List<String> keywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());
         return keywords.stream().anyMatch(lowerCaseContent::contains);
     }
 
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
-        // --- 处理管理指令 ---
         if (content.equalsIgnoreCase(LIST_COMMAND)) {
             logger.info("用户 [{}] 执行知识库指令: 列出文件", externalUserId);
-            // 【修改】调用新的格式化方法
             String fileList = knowledgeBaseService.getFormattedFileListForUser(externalUserId);
             return Optional.of(new TextReply(fileList));
         }
@@ -80,7 +78,6 @@ public class KnowledgeHandler implements MessageHandler {
             }
         }
 
-        // --- 处理RAG问答 ---
         logger.info("为用户 [{}] 的提问启用知识库增强问答 (关键词触发)...", externalUserId);
         String context = knowledgeBaseService.retrieveKnowledgeForUser(externalUserId);
 

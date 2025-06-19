@@ -59,7 +59,7 @@ public class UserConfigService {
             "LotteryHandler", Arrays.asList("大乐透", "双色球", "今日中奖号码", "查彩票", "开奖"),
             "MenuHandler", Arrays.asList("菜单", "功能", "帮助", "你能做什么", "help", "menu"),
             // SystemHandler sub-commands
-            "SystemHandler_ClearHistory", Arrays.asList("清空历史对话", "清空记录", "清除历史对话"),
+            "SystemHandler_ClearHistory", Arrays.asList("清空历史对话", "清空记录", "清除历史对话","清空聊天记录"),
             "SystemHandler_QueryId", Arrays.asList("查询id", "我的id"),
             "SystemHandler_ChatStats", Arrays.asList("对话统计", "消息统计"),
             "SystemHandler_UserQuestions", Arrays.asList("我问过的问题", "历史问题", "我的提问"),
