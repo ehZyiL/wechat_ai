@@ -43,7 +43,6 @@ public class WeChatUtils {
 
         // 提取消息长度
         int msgLen = ByteBuffer.wrap(Arrays.copyOfRange(decrypted, 16, 20)).getInt();
-        System.out.println("Message length from header: " + msgLen);
 
         // 验证并截取有效内容（16字节随机串 + 4字节长度 + msgLen）
         int totalLen = 16 + 4 + msgLen;
@@ -52,8 +51,6 @@ public class WeChatUtils {
         }
         // 跳过随机串和长度，获取消息体
         byte[] message = Arrays.copyOfRange(decrypted, 20, 20 + msgLen);
-        System.out.println("Decrypted message: " + new String(message, StandardCharsets.UTF_8));
-
         // 移除 PKCS#7 填充（如果存在）
         int pad = message[message.length - 1];
         if (pad > 0 && pad <= 16) {

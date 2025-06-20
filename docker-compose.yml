@@ -1,0 +1,22 @@
+services:
+  app:
+    image: xlike0616/kn_ai_chat:latest
+    container_name: kn-ai-chat-app
+    restart: always
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - WECHAT_TOKEN=${WECHAT_TOKEN}
+      - WECHAT_AES_KEY=${WECHAT_AES_KEY}
+      - WECHAT_CORP_ID=${WECHAT_CORP_ID}
+      - WECHAT_SECRET=${WECHAT_SECRET}
+      - WECHAT_OPEN_KFID=${WECHAT_OPEN_KFID}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - AI_API_KEY=${AI_API_KEY}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - DOCKER_SERVER_PORT=${DOCKER_SERVER_PORT}
