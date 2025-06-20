@@ -40,7 +40,6 @@ public class WeChatUtils {
         IvParameterSpec ivSpec = new IvParameterSpec(key, 0, 16);
         cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
         byte[] decrypted = cipher.doFinal(encrypted);
-
         // 提取消息长度
         int msgLen = ByteBuffer.wrap(Arrays.copyOfRange(decrypted, 16, 20)).getInt();
 
@@ -51,6 +50,7 @@ public class WeChatUtils {
         }
         // 跳过随机串和长度，获取消息体
         byte[] message = Arrays.copyOfRange(decrypted, 20, 20 + msgLen);
+
         // 移除 PKCS#7 填充（如果存在）
         int pad = message[message.length - 1];
         if (pad > 0 && pad <= 16) {
