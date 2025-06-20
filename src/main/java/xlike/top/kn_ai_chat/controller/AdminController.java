@@ -1,5 +1,6 @@
 package xlike.top.kn_ai_chat.controller;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import xlike.top.kn_ai_chat.domain.WeChatUser;
 import xlike.top.kn_ai_chat.repository.AiConfigRepository;
+import xlike.top.kn_ai_chat.repository.KeywordConfigRepository;
 import xlike.top.kn_ai_chat.repository.MessageLogRepository;
 import xlike.top.kn_ai_chat.repository.WeChatUserRepository;
 import xlike.top.kn_ai_chat.service.KnowledgeBaseService;
@@ -39,8 +41,9 @@ public class AdminController {
     private final KnowledgeBaseService knowledgeBaseService;
     private final MessageLogRepository messageLogRepository;
     private final AiConfigRepository aiConfigRepository;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final KeywordConfigRepository keywordConfigRepository;
 
-    // 【新增】用于返回给前端的DTO，包含用户和提问总数
     @Data
     @AllArgsConstructor
     public static class UserStatsDto {
@@ -48,16 +51,68 @@ public class AdminController {
         private long totalQuestions;
     }
 
-    // 【修改】构造函数，注入所有依赖
-    public AdminController(WeChatUserRepository userRepository, SystemService systemService, KnowledgeBaseService knowledgeBaseService, MessageLogRepository messageLogRepository, AiConfigRepository aiConfigRepository) {
+    @Data
+    static class PasswordDto {
+        private String password;
+    }
+
+    public AdminController(WeChatUserRepository userRepository, SystemService systemService, KnowledgeBaseService knowledgeBaseService, MessageLogRepository messageLogRepository, AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository, StringRedisTemplate stringRedisTemplate) {
         this.userRepository = userRepository;
         this.systemService = systemService;
         this.knowledgeBaseService = knowledgeBaseService;
         this.messageLogRepository = messageLogRepository;
         this.aiConfigRepository = aiConfigRepository;
+        this.keywordConfigRepository = keywordConfigRepository;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
-    // ... (login, userManagementPage, getAllUsers 等方法保持不变)
+
+    /**
+     * 清空所有数据库表和Redis缓存
+     * 这是一个极度危险的操作，会清空所有数据。
+     */
+    @PostMapping("/api/system/clear-all-data")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<String> clearAllData(@RequestBody PasswordDto passwordDto, HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
+            return ResponseEntity.status(401).body("未授权的访问");
+        }
+
+        if (passwordDto == null || !adminPassword.equals(passwordDto.getPassword())) {
+            logger.warn("尝试执行清除所有数据的操作，但密码错误。");
+            return ResponseEntity.status(403).body("管理员密码错误！");
+        }
+
+        logger.error("【！！！高危操作警告！！！】密码校验通过，开始执行清空所有表和Redis的请求！");
+
+        // 步骤1: 批量清空所有相关表
+        logger.warn("正在清空 KnowledgeBase 表...");
+        knowledgeBaseService.deleteAllKnowledgeData();
+        logger.warn("正在清空 MessageLog 表...");
+        messageLogRepository.deleteAllInBatch();
+        logger.warn("正在清空 AiConfig 表...");
+        aiConfigRepository.deleteAllInBatch();
+        logger.warn("正在清空 KeywordConfig 表...");
+        keywordConfigRepository.deleteAllInBatch();
+        logger.warn("正在清空 WeChatUser 表...");
+        userRepository.deleteAllInBatch();
+        logger.warn("所有数据库表已清空。");
+
+        // 步骤2: 清空Redis
+        try {
+            logger.warn("正在清空Redis缓存...");
+            stringRedisTemplate.getConnectionFactory().getConnection().flushAll();
+            logger.warn("Redis缓存已成功清空。");
+        } catch (Exception e) {
+            logger.error("清空Redis数据时发生严重错误。", e);
+        }
+
+        logger.error("【！！！系统数据清除完成！！！】");
+        return ResponseEntity.ok("系统所有数据已成功清除！");
+    }
+
+
     @GetMapping("/login")
     public String loginPage() {
         return "login";
@@ -80,6 +135,17 @@ public class AdminController {
             return "redirect:/admin/login";
         }
         return "users";
+    }
+
+    /**
+     *自定义回复页面路由
+     */
+    @GetMapping("/custom-replies")
+    public String customRepliesPage(HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
+            return "redirect:/admin/login";
+        }
+        return "custom-replies";
     }
     
     @GetMapping("/api/users")

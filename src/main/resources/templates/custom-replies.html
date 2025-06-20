@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义回复管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+        :root {
+            --bs-primary-rgb: 71, 129, 230; /* 自定义主题色 */
+            --bs-body-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--bs-body-bg);
+            color: #343a40;
+        }
+
+        .container {
+            max-width: 960px;
+        }
+
+        /* 卡片统一样式 */
+        .card {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* 按钮统一样式 */
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-primary {
+            box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.2);
+        }
+
+        /* 表单样式优化 */
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+            border-color: rgba(var(--bs-primary-rgb), 0.5);
+        }
+
+        /* 自定义用户选择下拉菜单样式 */
+        .user-select-dropdown .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .user-select-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+        }
+        .user-select-dropdown .dropdown-item img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-select-dropdown .dropdown-item .user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .user-select-dropdown .dropdown-item .user-nickname {
+            font-weight: 500;
+        }
+        .user-select-dropdown .dropdown-item .user-id {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        #user-select-button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #user-select-button img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* 规则列表样式优化 (替换表格) */
+        #replies-list-container .list-group-item {
+            display: grid;
+            grid-template-columns: 1.5fr 3fr 1.5fr 1.5fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-left: none;
+            border-right: none;
+        }
+        #replies-list-container .list-group-item:first-child {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        .reply-keyword {
+            font-weight: 700;
+            color: var(--bs-primary);
+            word-break: break-all;
+        }
+        .reply-content {
+            color: #495057;
+            word-break: break-all;
+        }
+        .reply-scope .badge, .reply-match-type .badge {
+            font-size: 0.85em;
+            padding: 0.4em 0.7em;
+        }
+        .reply-actions {
+            text-align: right;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            #replies-list-container .list-group-item {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                text-align: center;
+                border-bottom: 1px solid #dee2e6;
+            }
+            #replies-list-container .list-group-item:last-child {
+                border-bottom: none;
+            }
+            .reply-actions {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container my-5">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="bi bi-chat-quote-fill me-2"></i>自定义回复管理</h1>
+        <a href="/admin/users" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>返回</a>
+    </header>
+
+    <div class="card mb-4">
+        <div class="card-header">新增/修改规则</div>
+        <div class="card-body">
+            <form id="reply-form">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">适用范围</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="scope" id="scope-global" value="global" checked>
+                                <label class="form-check-label" for="scope-global">全局默认</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="scope" id="scope-user" value="user">
+                                <label class="form-check-label" for="scope-user">用户专属</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">匹配方式</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="matchType" id="match-equals" value="EQUALS" checked>
+                                <label class="form-check-label" for="match-equals">等于</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="matchType" id="match-contains" value="CONTAINS">
+                                <label class="form-check-label" for="match-contains">包含</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="user-select-container" style="display: none;">
+                    <label for="user-select-button" class="form-label fw-bold">选择用户</label>
+                    <div class="dropdown user-select-dropdown">
+                        <button class="btn btn-light border w-100 text-start" type="button" id="user-select-button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="selected-user-text">请选择一个用户</span>
+                        </button>
+                        <ul class="dropdown-menu w-100" id="user-select-list" aria-labelledby="user-select-button">
+                        </ul>
+                    </div>
+                    <input type="hidden" id="selected-user-id-hidden">
+                </div>
+
+                <div class="mb-3">
+                    <label for="keyword" class="form-label fw-bold">关键词</label>
+                    <input type="text" class="form-control" id="keyword" required placeholder="例如：你好">
+                    <div id="keyword-help" class="form-text">“等于”模式将自动忽略标点、空格并转为小写。“包含”模式仅忽略大小写。</div>
+                </div>
+                <div class="mb-3">
+                    <label for="reply" class="form-label fw-bold">回复内容</label>
+                    <input type="text" class="form-control" id="reply" required placeholder="例如：你好呀！">
+                </div>
+
+                <hr class="my-4">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-plus-circle me-1"></i>保存规则
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">已有规则列表</div>
+        <div class="list-group list-group-flush" id="replies-list-container">
+            <div class="list-group-item bg-light fw-bold d-none d-md-grid">
+                <div>关键词</div>
+                <div>回复内容</div>
+                <div>匹配方式</div>
+                <div>适用范围</div>
+                <div class="text-end">操作</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+    const usersMap = new Map();
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadUsers();
+        await loadReplies();
+
+        document.getElementById('reply-form').addEventListener('submit', handleFormSubmit);
+
+        document.querySelectorAll('input[name="scope"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const userSelectContainer = document.getElementById('user-select-container');
+                userSelectContainer.style.display = this.value === 'user' ? 'block' : 'none';
+                if(this.value === 'global') {
+                    resetUserSelection();
+                }
+            });
+        });
+    });
+
+    function resetUserSelection() {
+        document.getElementById('selected-user-text').innerHTML = `<span>请选择一个用户</span>`;
+        document.getElementById('selected-user-id-hidden').value = '';
+    }
+
+    async function loadUsers() {
+        try {
+            const response = await fetch('/admin/api/users');
+            if (!response.ok) throw new Error('用户列表加载失败');
+            const userStats = await response.json();
+            const userList = document.getElementById('user-select-list');
+            userList.innerHTML = '';
+
+            userStats.forEach(dto => {
+                const user = dto.user;
+                usersMap.set(user.externalUserId, user.nickname || '未知用户');
+
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                link.className = 'dropdown-item';
+                link.href = '#';
+                link.dataset.id = user.externalUserId;
+                link.dataset.nickname = user.nickname || '未知昵称';
+                link.dataset.avatar = user.avatar || 'https://via.placeholder.com/36';
+
+                link.innerHTML = `
+                    <img src="${escapeHtml(link.dataset.avatar)}" alt="avatar">
+                    <div class="user-info">
+                        <span class="user-nickname">${escapeHtml(link.dataset.nickname)}</span>
+                        <span class="user-id">${escapeHtml(user.externalUserId)}</span>
+                    </div>
+                `;
+
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('selected-user-text').innerHTML = `
+                        <img src="${this.dataset.avatar}" alt="avatar">
+                        <span>${escapeHtml(this.dataset.nickname)}</span>
+                    `;
+                    document.getElementById('selected-user-id-hidden').value = this.dataset.id;
+                });
+
+                listItem.appendChild(link);
+                userList.appendChild(listItem);
+            });
+        } catch(e) { console.error("加载用户失败:", e); }
+    }
+
+    async function loadReplies() {
+        try {
+            const response = await fetch('/admin/api/custom-replies');
+            if (!response.ok) {
+                if (response.status === 401) window.location.href = '/admin/login';
+                throw new Error('规则列表加载失败');
+            }
+            const replies = await response.json();
+            const listContainer = document.getElementById('replies-list-container');
+            // 清空旧数据，但保留表头
+            listContainer.querySelectorAll('.list-group-item:not(.bg-light)').forEach(el => el.remove());
+
+            if (replies.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'list-group-item text-center text-muted p-4';
+                placeholder.textContent = '暂无规则，请在上方添加';
+                listContainer.appendChild(placeholder);
+                return;
+            }
+
+            replies.forEach(r => {
+                const nickname = usersMap.get(r.externalUserId) || r.externalUserId;
+                const scope = r.externalUserId
+                    ? `<span class="badge bg-info text-dark">用户: ${escapeHtml(nickname)}</span>`
+                    : '<span class="badge bg-success">全局默认</span>';
+
+                const matchType = r.matchType === 'CONTAINS'
+                    ? '<span class="badge bg-warning text-dark">包含</span>'
+                    : '<span class="badge bg-primary">等于</span>';
+
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <div class="reply-keyword">${escapeHtml(r.keyword)}</div>
+                    <div class="reply-content">${escapeHtml(r.reply)}</div>
+                    <div class="reply-match-type">${matchType}</div>
+                    <div class="reply-scope">${scope}</div>
+                    <div class="reply-actions">
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteReply(${r.id})" title="删除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        } catch (error) {
+            console.error('加载规则失败:', error);
+        }
+    }
+
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        const scope = document.querySelector('input[name="scope"]:checked').value;
+        const matchType = document.querySelector('input[name="matchType"]:checked').value;
+        let externalUserId = null;
+
+        if (scope === 'user') {
+            externalUserId = document.getElementById('selected-user-id-hidden').value;
+            if (!externalUserId) {
+                alert('请选择一个用户！');
+                return;
+            }
+        }
+
+        const payload = {
+            matchType: matchType,
+            keyword: document.getElementById('keyword').value,
+            reply: document.getElementById('reply').value,
+            externalUserId: externalUserId
+        };
+
+        try {
+            const response = await fetch('/admin/api/custom-replies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || '保存失败');
+            }
+            document.getElementById('reply-form').reset();
+            document.querySelector('#scope-global').checked = true;
+            document.querySelector('#match-equals').checked = true;
+            document.getElementById('user-select-container').style.display = 'none';
+            resetUserSelection();
+            await loadReplies();
+        } catch (error) {
+            alert(error.message);
+            console.error('保存规则失败:', error);
+        }
+    }
+
+    async function deleteReply(id) {
+        if (!confirm('确定要删除这条规则吗？')) return;
+        try {
+            const response = await fetch(`/admin/api/custom-replies/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('删除失败');
+            await loadReplies();
+        } catch (error) {
+            alert(error.message);
+            console.error('删除规则失败:', error);
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+</script>
+</body>
+</html>

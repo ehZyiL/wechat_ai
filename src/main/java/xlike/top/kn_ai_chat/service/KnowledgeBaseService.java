@@ -72,7 +72,7 @@ public class KnowledgeBaseService {
     public List<Knowledge> listFilesForUser(String externalUserId) {
         return repository.findByExternalUserId(externalUserId);
     }
-    
+
     /**
      * 获取格式化后的文件列表字符串，供聊天机器人使用
      *
@@ -166,4 +166,17 @@ public class KnowledgeBaseService {
                         entry.getFileName(), entry.getContent()))
                 .collect(Collectors.joining());
     }
+
+
+    /**
+     * 清空 knowledge_base 数据库表
+     * 这是 deleteAllInBatch 的服务层封装
+     */
+    @Transactional
+    public void deleteAllKnowledgeData() {
+        logger.warn("正在通过服务层清空 KnowledgeBase 表...");
+        repository.deleteAllInBatch();
+        logger.warn("KnowledgeBase 表已通过服务层清空。");
+    }
+
 }

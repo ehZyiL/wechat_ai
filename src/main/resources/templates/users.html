@@ -22,7 +22,14 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="bi bi-people-fill"></i> 用户管理</h1>
-        <a href="/config" class="btn btn-secondary"><i class="bi bi-sliders"></i> 全局配置</a>
+        <div>
+            <button class="btn btn-danger" onclick="clearAllData()"
+                    title="【高危】此操作将清空系统内所有用户、所有对话、所有知识库和所有配置。请谨慎操作！">
+                <i class="bi bi-exclamation-octagon-fill"></i> 清除所有数据
+            </button>
+            <a href="/config" class="btn btn-secondary"><i class="bi bi-sliders"></i> 全局配置</a>
+            <a href="/admin/custom-replies" class="btn btn-info"><i class="bi bi-chat-dots-fill"></i> 自定义回复</a>
+        </div>
     </div>
     <div class="card">
         <div class="card-body">
@@ -80,7 +87,6 @@
                 const blockButtonIcon = user.blocked ? 'bi-check-circle' : 'bi-slash-circle';
                 const actionUrl = user.blocked ? `/admin/api/users/${user.externalUserId}/unblock` : `/admin/api/users/${user.externalUserId}/block`;
 
-                // --- 【核心修改】在操作列增加 “删除用户” 按钮 ---
                 tr.innerHTML = `
                     <td><img src="${user.avatar || 'https://via.placeholder.com/40'}" alt="avatar" class="avatar"></td>
                     <td>${escapeHtml(user.nickname) || 'N/A'}</td>
@@ -105,8 +111,6 @@
                         </button>
                     </td>
                 `;
-                // --- 修改结束 ---
-
                 tableBody.appendChild(tr);
             });
 
@@ -117,7 +121,6 @@
         }
     }
 
-    // ... (toggleBlock 和 clearHistory 函数保持不变) ...
     async function toggleBlock(url) {
         if (!confirm('确定要执行此操作吗？')) {
             return;
@@ -126,7 +129,7 @@
             const response = await fetch(url, { method: 'POST' });
             if (response.ok) {
                 alert('操作成功！');
-                loadUsers(); // 刷新列表
+                loadUsers();
             } else {
                 throw new Error('操作失败');
             }
@@ -144,7 +147,7 @@
             const response = await fetch(`/admin/api/users/${userId}/clear-history`, { method: 'POST' });
             if (response.ok) {
                 alert('历史记录已清除！');
-                loadUsers(); // 刷新列表以更新提问次数
+                loadUsers();
             } else {
                 const errorText = await response.text();
                 throw new Error(errorText || '操作失败');
@@ -155,10 +158,6 @@
         }
     }
 
-
-    /**
-     * 【新增】删除用户的函数
-     */
     async function deleteUser(userId) {
         if (!confirm(`【高危操作】你确定要永久删除用户 ${userId} 吗？`)) {
             return;
@@ -171,13 +170,13 @@
             const response = await fetch(`/admin/api/users/${userId}`, { method: 'DELETE' });
             if (response.ok) {
                 alert('用户及其所有数据已成功删除！');
-                loadUsers(); // Refresh the list
+                loadUsers();
             } else {
                 const errorText = await response.text();
                 throw new Error(errorText || '删除失败');
             }
         } catch(error) {
-            console.error('Error:', error);
+            console.error('删除操作失败: ' + error.message);
             alert('删除操作失败: ' + error.message);
         }
     }
@@ -192,6 +191,38 @@
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    /**
+     * 清除所有系统数据的函数，带有两次强力确认和一次密码校验
+     */
+    async function clearAllData() {
+        const password = prompt("为确认此高危操作，请输入您的管理员密码：");
+        if (password === null) {
+            alert('操作已取消。');
+            return;
+        }
+        try {
+            const response = await fetch('/admin/api/system/clear-all-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            });
+
+            if (response.ok) {
+                alert('系统所有数据已成功清除！页面将自动刷新。');
+                window.location.reload();
+            } else {
+                // 读取后端返回的错误信息并提示
+                const errorText = await response.text();
+                throw new Error(errorText || '操作失败，请检查后端日志');
+            }
+        } catch(error) {
+            console.error('Error:', error);
+            alert('操作失败: ' + error.message);
+        }
     }
 </script>
 </body>

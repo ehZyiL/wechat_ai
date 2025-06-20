@@ -28,7 +28,7 @@ public class SemanticService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserConfigService userConfigService;
 
-    private static final String JUDGMENT_PROMPT = "请根据以下要求生成响应：1.深入分析用户输入的上下文、语气、语义及潜在意图，综合判断是否满足肯定条件，例如上下文是否需要使用语音回答，如果需要语音回答是true,否则是false。2.返回一个布尔值（true或false），true表示肯定判断，false表示否定或无法明确肯定。3.响应必须严格为以下JSON格式：{'result':true}或{'result':false}，无换行、注释或其他内容。4.若输入模糊、语义不清或无法判断，优先返回{'result':false}。示例：-输入：1+1=2，输出：{'result':true}-输入：你觉得我今天心情很好吗？（语气积极），输出：{'result':true}-输入：1+1=11，输出：{'result':false}-输入：明天会下雨吗？（无明确依据），输出：{'result':false}，对于一般的提问，都是false，当如果感觉到情绪悲伤,有波动的话，是true,请处理以下输入并返回结果：";
+    private static final String JUDGMENT_PROMPT = "请根据以下要求生成响应：1.深入分析用户输入的上下文、语气、语义及潜在意图，综合判断是否满足肯定条件，例如上下文是否需要使用语音回答，如果需要语音回答是true,否则是false。2.返回一个布尔值（true或false），true表示肯定判断，false表示否定或无法明确肯定。3.响应必须严格为以下JSON格式：{'result':true}或{'result':false}，无换行、注释或其他内容。4.若输入模糊、语义不清或无法判断，优先返回{'result':false}。示例：你觉得我今天心情很好吗？（语气积极），输出：{'result':true}-输入：明天会下雨吗？（无明确依据），输出：{'result':false}，对于一般的提问，都是false，当如果感觉到情绪悲伤,有波动的话，是true,请处理以下输入并返回结果：";
 
 
     public SemanticService(RestTemplate restTemplate, UserConfigService userConfigService) {
