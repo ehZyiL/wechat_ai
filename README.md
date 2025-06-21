@@ -2,11 +2,8 @@
 
 `kn-ai-chat` 是一个功能强大、可高度定制的企业微信 AI 助手。它基于 Java Spring Boot 框架构建，深度集成了企业微信的客服消息接口和多种先进的 AI 模型能力，旨在为企业和个人提供智能、高效、多模态的自动化客户沟通解决方案。
 
-```HTML
-<video width="320" height="240" controls>
-    <source src="files/video.mp4" type="video/mp4">
-</video>
-```
+https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
+
 ## ✨ 核心功能
 该项目通过模块化的消息处理器（Handler）实现丰富的功能，并支持精细的用户级和全局级配置。
 
