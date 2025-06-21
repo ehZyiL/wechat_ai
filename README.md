@@ -1,6 +1,7 @@
 # Kn-AI-Chat 微信客服 AI 助手
 
 `kn-ai-chat` 是一个功能强大、可高度定制的微信 AI 客服助手。它基于 Java Spring Boot 框架构建，深度集成了企业微信的客服消息接口和多种先进的 AI 模型能力
+如果需要部署此项目，需要注意查看.evn 文件中的说明 - 这很重要！！！
 
 https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 
@@ -98,11 +99,6 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 ### AI 服务商的 API Key
 - `AI_API_KEY=sk-`
 
-### --- Redis ---
-- `REDIS_HOST=127.0.0.1`
-- `REDIS_PORT=6379`
-- `REDIS_PASSWORD=123456`
-
 ### Docker 端口
 - `DOCKER_SERVER_PORT=8081`
 
@@ -110,16 +106,6 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 ### 直接下载仓库中的 `docker-compose.yml` 和 `.env` 文件，运行以下命令启动：
 ```
 docker-compose up -d
-```
-
-### 停止服务：
-```
-docker-compose down
-```
-
-### 查看服务状态：
-```
-docker-compose ps
 ```
 
 ## 📝 注意事项（必看！！！）
