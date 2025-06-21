@@ -99,7 +99,7 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 ### 管理后台密码 - 默认为 admin
 - `ADMIN_PASSWORD=admin`
 
-### AI 服务商的 API Key
+### AI 服务商的 API Key - 最好使用 SiliconFlow，别的厂商没测试过!!!
 - `AI_API_KEY=sk-`
 
 ### Docker 端口
