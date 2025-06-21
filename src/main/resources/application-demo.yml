@@ -51,5 +51,5 @@ default:
       image-model: "Kwai-Kolors/Kolors"
       tts-model: "FunAudioLLM/CosyVoice2-0.5B"
       stt-model: "FunAudioLLM/SenseVoiceSmall"
-      voice: "speech:cxk:clykbri4i000210pbgcrapso0:whmpulffgeakvrxayxgk"
+      voice: "FunAudioLLM/CosyVoice2-0.5B:alex"
       vlm-model: "Qwen/Qwen2-VL-72B-Instruct"

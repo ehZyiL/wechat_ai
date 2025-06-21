@@ -125,8 +125,9 @@
                 <div class="mb-4">
                     <label for="externalUserId" class="form-label"><i class="bi bi-person-badge"></i> 用户 ID (External User ID)</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入您的用户ID或'default'以配置全局默认值" required>
-                        <button class="btn btn-secondary" type="button" id="loadConfigBtn">加载配置</button>
+                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入用户ID或'default'以配置全局默认值" required>
+                        <button class="btn btn-secondary" type="button" id="loadConfigBtn"><i class="bi bi-download me-1"></i>加载配置</button>
+                        <button class="btn btn-info" type="button" id="resetConfigBtn"><i class="bi bi-arrow-counterclockwise me-1"></i>重置为默认</button>
                     </div>
                 </div>
 
@@ -303,6 +304,7 @@
 <script>
     const API_BASE_URL = '/api/config';
     const loader = document.getElementById('loader');
+    const configForm = document.getElementById('configForm');
 
     function showLoader() { loader.style.display = 'block'; }
     function hideLoader() { loader.style.display = 'none'; }
@@ -314,6 +316,16 @@
                                 ${message}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                              </div>`;
+        // 自动滚动到消息位置
+        statusDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 新增：清空所有表单字段的函数
+    function clearAllForms() {
+        // 清空AI配置表单
+        configForm.reset();
+        // 清空所有关键词输入框
+        document.querySelectorAll('.keyword-input').forEach(input => input.value = '');
     }
 
     async function loadAiConfig(userId) {
@@ -322,9 +334,11 @@
             const response = await fetch(`${API_BASE_URL}/ai/${userId}`);
             if (!response.ok) throw new Error(`无法加载AI配置: ${response.statusText}`);
             const config = await response.json();
+            // 填充表单
             for (const key in config) {
-                if (document.getElementById(key)) {
-                    document.getElementById(key).value = config[key];
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = config[key];
                 }
             }
         } catch (error) {
@@ -355,18 +369,55 @@
             showStatusMessage("请输入用户ID以加载配置。", true);
             return;
         }
+
+        // 修改：加载前先清空旧数据
+        clearAllForms();
+        // 重新设置userId，因为clearAllForms会清空它
+        document.getElementById('externalUserId').value = userId;
+
         showLoader();
-        await Promise.all([
-            loadAiConfig(userId),
-            loadAllKeywords(userId)
-        ]);
-        hideLoader();
-        showStatusMessage("配置已成功加载！", false);
+        try {
+            await Promise.all([
+                loadAiConfig(userId),
+                loadAllKeywords(userId)
+            ]);
+            showStatusMessage(`用户 [${userId}] 的配置已成功加载！`, false);
+        } catch (error) {
+            showStatusMessage(`加载配置时发生未知错误: ${error.message}`, true);
+        } finally {
+            hideLoader();
+        }
     }
 
+    // 新增：重置为默认值的函数
+    async function resetToDefault() {
+        const currentUserId = document.getElementById('externalUserId').value.trim();
+        if (!currentUserId) {
+            showStatusMessage("请输入您想为其重置配置的用户ID。", true);
+            return;
+        }
+
+        const confirmation = confirm(`您确定要用全局默认配置覆盖当前表单内容吗？\n\n这将会为用户 [${currentUserId}] 加载'default'的配置。\n您需要手动点击“保存”按钮来使更改生效。`);
+        if (!confirmation) return;
+
+        showLoader();
+        try {
+            // 关键：加载'default'用户的配置来填充表单
+            await Promise.all([
+                loadAiConfig('default'),
+                loadAllKeywords('default')
+            ]);
+            showStatusMessage("表单已重置为全局默认配置。请检查后点击“保存”以应用到当前用户。", false);
+        } catch (error) {
+            showStatusMessage(`重置配置时出错: ${error.message}`, true);
+        } finally {
+            hideLoader();
+        }
+    }
+
+
     async function saveAiConfig() {
-        const form = document.getElementById('configForm');
-        const formData = new FormData(form);
+        const formData = new FormData(configForm);
         const configData = {};
         formData.forEach((value, key) => { configData[key] = value; });
 
@@ -382,8 +433,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configData),
             });
-            if (!response.ok) throw new Error(`保存失败: ${response.statusText}`);
-            showStatusMessage('AI 配置已成功保存！', false);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`保存失败: ${response.statusText} - ${errorText}`);
+            }
+            showStatusMessage(`用户 [${userId}] 的 AI 配置已成功保存！`, false);
         } catch (error) {
             showStatusMessage(`保存AI配置时出错: ${error.message}`, true);
         } finally {
@@ -410,7 +464,7 @@
                 const errorData = await response.json();
                 throw new Error(`保存失败: ${errorData.message || response.statusText}`);
             }
-            showStatusMessage(`'${handlerName}' 的关键词已成功保存！`, false);
+            showStatusMessage(`用户 [${userId}] 的 '${handlerName}' 关键词已成功保存！`, false);
         } catch (error) {
             showStatusMessage(`保存关键词时出错: ${error.message}`, true);
         } finally {
@@ -418,12 +472,19 @@
         }
     }
 
+    // 页面加载时的初始化逻辑
     document.addEventListener('DOMContentLoaded', () => {
         const userIdInput = document.getElementById('externalUserId');
+        const urlParams = new URLSearchParams(window.location.search);
+        const userIdFromUrl = urlParams.get('userId');
+        if (userIdFromUrl) {
+            userIdInput.value = userIdFromUrl;
+        }
         if (userIdInput.value) {
             loadAllConfigs();
         }
         document.getElementById('loadConfigBtn').addEventListener('click', loadAllConfigs);
+        document.getElementById('resetConfigBtn').addEventListener('click', resetToDefault);
     });
 </script>
 

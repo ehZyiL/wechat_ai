@@ -19,6 +19,7 @@ import xlike.top.kn_ai_chat.repository.MessageLogRepository;
 import xlike.top.kn_ai_chat.repository.WeChatUserRepository;
 import xlike.top.kn_ai_chat.service.KnowledgeBaseService;
 import xlike.top.kn_ai_chat.service.SystemService;
+import xlike.top.kn_ai_chat.service.UserConfigService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +44,7 @@ public class AdminController {
     private final AiConfigRepository aiConfigRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final KeywordConfigRepository keywordConfigRepository;
+    private final UserConfigService userConfigService;
 
     @Data
     @AllArgsConstructor
@@ -56,7 +58,7 @@ public class AdminController {
         private String password;
     }
 
-    public AdminController(WeChatUserRepository userRepository, SystemService systemService, KnowledgeBaseService knowledgeBaseService, MessageLogRepository messageLogRepository, AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository, StringRedisTemplate stringRedisTemplate) {
+    public AdminController(WeChatUserRepository userRepository, SystemService systemService, KnowledgeBaseService knowledgeBaseService, MessageLogRepository messageLogRepository, AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository, StringRedisTemplate stringRedisTemplate, UserConfigService userConfigService) {
         this.userRepository = userRepository;
         this.systemService = systemService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -64,6 +66,7 @@ public class AdminController {
         this.aiConfigRepository = aiConfigRepository;
         this.keywordConfigRepository = keywordConfigRepository;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.userConfigService = userConfigService;
     }
 
 
@@ -109,6 +112,8 @@ public class AdminController {
         }
 
         logger.error("【！！！系统数据清除完成！！！】");
+        userConfigService.initDefaultConfig();
+        logger.warn("所有数据清空并重新初始化默认配置完成！");
         return ResponseEntity.ok("系统所有数据已成功清除！");
     }
 

@@ -9,6 +9,7 @@ import xlike.top.kn_ai_chat.domain.KeywordConfig;
 import xlike.top.kn_ai_chat.repository.AiConfigRepository;
 import xlike.top.kn_ai_chat.repository.KeywordConfigRepository;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -67,17 +68,21 @@ public class UserConfigService {
     );
 
 
-    public UserConfigService(AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository) {
-        this.aiConfigRepository = aiConfigRepository;
-        this.keywordConfigRepository = keywordConfigRepository;
+    @PostConstruct
+    public void onApplicationStart() {
+        initDefaultConfig();
     }
 
-    public AiConfig getAiConfig(String externalUserId) {
-        // 1. 获取配置，如果不存在则使用默认配置
-        AiConfig config = aiConfigRepository.findByExternalUserId(externalUserId).orElseGet(() -> {
-            logger.info("用户 {} 无自定义AI配置，使用默认配置。", externalUserId);
+    /**
+     * 初始化默认配置的核心方法。
+     * 如果'default'配置不存在，则从YML文件创建它。
+     * 这个方法是可重用的，供启动时和数据清除后调用。
+     */
+    public void initDefaultConfig() {
+        if (!aiConfigRepository.existsById("default")) {
+            logger.info("数据库中未找到'default'用户配置，正在从 application.yml 创建...");
             AiConfig defaultConfig = new AiConfig();
-            defaultConfig.setExternalUserId(externalUserId);
+            defaultConfig.setExternalUserId("default");
             defaultConfig.setAiBaseUrl(defaultAiBaseUrl);
             defaultConfig.setAiApiKey(defaultAiApiKey);
             defaultConfig.setAiModel(defaultAiModel);
@@ -89,14 +94,78 @@ public class UserConfigService {
             defaultConfig.setSfVoice(defaultSfVoice);
             defaultConfig.setSfVlmModel(defaultSfVlmModel);
             defaultConfig.setLastModified(LocalDateTime.now());
-            return defaultConfig;
-        });
-        // 2. 过滤掉从数据库中可能读出的、包含内部指令的旧数据
+            aiConfigRepository.save(defaultConfig);
+            logger.info("'default'用户配置已成功创建并存入数据库。");
+        } else {
+            logger.info("数据库中已存在'default'用户配置，无需初始化。");
+        }
+    }
+
+
+    public UserConfigService(AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository) {
+        this.aiConfigRepository = aiConfigRepository;
+        this.keywordConfigRepository = keywordConfigRepository;
+    }
+
+    public AiConfig getAiConfig(String externalUserId) {
+        // 优先级1：查找指定用户的个人配置
+        Optional<AiConfig> userConfig = aiConfigRepository.findByExternalUserId(externalUserId);
+        if (userConfig.isPresent()) {
+            logger.info("为用户 {} 找到并使用其个人AI配置。", externalUserId);
+            return processPrompt(userConfig.get());
+        }
+        logger.debug("用户 {} 无个人配置，尝试查找全局'default'配置...", externalUserId);
+        Optional<AiConfig> dbDefaultConfig = aiConfigRepository.findByExternalUserId("default");
+        if (dbDefaultConfig.isPresent()) {
+            return createConfigForUser(externalUserId, dbDefaultConfig.get());
+        }
+        // 优先级3：如果数据库连'default'配置都没有，则使用application.yml中的最终后备值
+        logger.warn("数据库中未找到全局'default'配置，为用户 {} 应用YML文件中的最终后备配置。", externalUserId);
+        return createFallbackConfig(externalUserId);
+    }
+
+    // 处理Prompt，移除内部指令
+    private AiConfig processPrompt(AiConfig config) {
         if (config.getSystemPrompt() != null && config.getSystemPrompt().contains(JSON_STRUCTURE_PROMPT)) {
             config.setSystemPrompt(config.getSystemPrompt().replace(JSON_STRUCTURE_PROMPT, ""));
         }
-        // 3. 返回处理过的配置对象
         return config;
+    }
+
+    // 根据一个模板配置为指定用户创建一个新配置对象
+    private AiConfig createConfigForUser(String externalUserId, AiConfig templateConfig) {
+        AiConfig newConfig = new AiConfig();
+        newConfig.setExternalUserId(externalUserId);
+        newConfig.setAiBaseUrl(templateConfig.getAiBaseUrl());
+        newConfig.setAiApiKey(templateConfig.getAiApiKey());
+        newConfig.setAiModel(templateConfig.getAiModel());
+        newConfig.setSystemPrompt(templateConfig.getSystemPrompt());
+        newConfig.setSfBaseUrl(templateConfig.getSfBaseUrl());
+        newConfig.setSfImageModel(templateConfig.getSfImageModel());
+        newConfig.setSfTtsModel(templateConfig.getSfTtsModel());
+        newConfig.setSfSttModel(templateConfig.getSfSttModel());
+        newConfig.setSfVoice(templateConfig.getSfVoice());
+        newConfig.setSfVlmModel(templateConfig.getSfVlmModel());
+        newConfig.setLastModified(templateConfig.getLastModified());
+        return processPrompt(newConfig);
+    }
+
+    // 创建最终的后备配置
+    private AiConfig createFallbackConfig(String externalUserId) {
+        AiConfig fallbackConfig = new AiConfig();
+        fallbackConfig.setExternalUserId(externalUserId);
+        fallbackConfig.setAiBaseUrl(defaultAiBaseUrl);
+        fallbackConfig.setAiApiKey(defaultAiApiKey);
+        fallbackConfig.setAiModel(defaultAiModel);
+        fallbackConfig.setSystemPrompt(defaultSystemPrompt);
+        fallbackConfig.setSfBaseUrl(defaultSfBaseUrl);
+        fallbackConfig.setSfImageModel(defaultSfImageModel);
+        fallbackConfig.setSfTtsModel(defaultSfTtsModel);
+        fallbackConfig.setSfSttModel(defaultSfSttModel);
+        fallbackConfig.setSfVoice(defaultSfVoice);
+        fallbackConfig.setSfVlmModel(defaultSfVlmModel);
+        fallbackConfig.setLastModified(LocalDateTime.now());
+        return processPrompt(fallbackConfig);
     }
 
     public AiConfig saveOrUpdateAiConfig(AiConfig aiConfig) {
