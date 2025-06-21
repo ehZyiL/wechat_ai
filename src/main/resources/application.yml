@@ -13,8 +13,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      # 本地开发环境使用 update， 在生产环境中建议使用 validate 或 none
-      ddl-auto: none
+      ddl-auto: update
   data:
     redis:
       # Redis 主机地址和端口，必须通过环境变量在 Docker 中指定
