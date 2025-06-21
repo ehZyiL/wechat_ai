@@ -125,7 +125,6 @@ public class KnowledgeBaseService {
      */
     public String deleteAllFilesForUser(String externalUserId) {
         try {
-            // 注意：这个操作需要你的Repository中有 deleteByExternalUserId 方法
             repository.deleteByExternalUserId(externalUserId);
             logger.info("用户 [{}] 的所有知识库文件已被删除。", externalUserId);
             return "✅ 已清空您的个人知识库中的所有文件。";
@@ -143,7 +142,6 @@ public class KnowledgeBaseService {
     @Transactional
     public void deleteKnowledgeByUserId(String externalUserId) {
         logger.info("请求删除用户 [{}] 的所有知识库记录...", externalUserId);
-        // 此操作依赖于Repository中的`deleteByExternalUserId`方法
         repository.deleteByExternalUserId(externalUserId);
         logger.info("删除用户 [{}] 知识库记录的操作已执行。", externalUserId);
     }
