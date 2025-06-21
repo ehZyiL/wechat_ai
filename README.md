@@ -76,7 +76,6 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 - https://kf.weixin.qq.com/kf/loginpage?redirect_uri=https%3A%2F%2Fkf.weixin.qq.com%2Fkf%2Fframe%3Ffrom%3Dauth#/config
 
 ### 点击开发配置
-- 首先启动项目，微信回调页面设置回调URL 为 `http://ip：端口/wechat/callback`，会返回 Secret。
 
 ### 随机获取生成的Token
 - `WECHAT_TOKEN=`
@@ -86,6 +85,8 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 
 ### 点击企业信息 - 企业ID
 - `WECHAT_CORP_ID=`
+
+### 接着启动项目，微信回调页面设置回调URL 为 `http://ip：端口/wechat/callback`，会返回 Secret。
 
 ### 回调配置成功的 Secret
 - `WECHAT_SECRET=`
