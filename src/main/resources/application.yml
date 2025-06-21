@@ -1,27 +1,20 @@
 server:
-  # 应用端口。可以通过 DOCKER_SERVER_PORT 环境变量覆盖
-  port: ${DOCKER_SERVER_PORT:8081}
-
+  port: 8081
 spring:
   datasource:
-    # H2 数据库文件路径。在 Docker 中，此路径会指向一个挂载的数据卷
     url: jdbc:h2:file:./data/kn_ai_chat_db
     driverClassName: org.h2.Driver
-    # 数据库用户名和密码，可以通过环境变量覆盖
-    username: ${DB_USER:kn_ai_chat}
-    password: ${DB_PASSWORD:kn_ai_chat}
+    username: xlike
+    password: 123456
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      # 在生产环境中建议使用 validate 或 none
       ddl-auto: update
   data:
     redis:
-      # Redis 主机地址和端口，必须通过环境变量在 Docker 中指定
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
+      host: 127.0.0.1
+      port: 6379
+      database: 0
       timeout: 1800000
       lettuce:
         pool:
@@ -29,21 +22,19 @@ spring:
           max-wait: -1
           max-idle: 5
           min-idle: 0
+# 微信2
 wechat:
-  token: ${WECHAT_TOKEN}
-  encoding-aes-key: ${WECHAT_AES_KEY}
-  corp-id: ${WECHAT_CORP_ID}
-  secret: ${WECHAT_SECRET}
-  open-kfid: ${WECHAT_OPEN_KFID}
-
+  token: Gqupbfy3LSKkMCXwg5lm4IYoxvrJCr
+  encoding-aes-key: uZgTn9eXmE695qvFE5E6crSKilVvUD34ZUxGm7sfYXx
+  corp-id: ww712d8540fe5c9ae1
+  secret: R8fNwKftR3T29FGthGacDdvL5G8ldmtDgei_mPN2ZnM
+  open-kfid: kfc748b546cc5895d1e
 admin:
-  password: ${ADMIN_PASSWORD}
-
-# --- AI 服务商的默认配置 ---
+  password: "xlike"
 default:
   ai:
     base-url: https://api.siliconflow.cn/v1/chat/completions
-    api-key: ${AI_API_KEY}
+    api-key: sk-lsqccdgbruyeuzjyypnjghyytkccmdgvafrlruaoxqdgrqum
     model: deepseek-ai/DeepSeek-V3
     system-prompt: 你是一个乐于助人的AI助手
     siliconflow:
@@ -51,5 +42,5 @@ default:
       image-model: "Kwai-Kolors/Kolors"
       tts-model: "FunAudioLLM/CosyVoice2-0.5B"
       stt-model: "FunAudioLLM/SenseVoiceSmall"
-      voice: "FunAudioLLM/CosyVoice2-0.5B:alex"
+      voice: "speech:cxk:clykbri4i000210pbgcrapso0:whmpulffgeakvrxayxgk"
       vlm-model: "Qwen/Qwen2-VL-72B-Instruct"
