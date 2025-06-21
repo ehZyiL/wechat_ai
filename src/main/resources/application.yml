@@ -17,7 +17,7 @@ spring:
   data:
     redis:
       # Redis 主机地址和端口，必须通过环境变量在 Docker 中指定
-      host: ${REDIS_HOST:127.0.0.1}
+      host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}

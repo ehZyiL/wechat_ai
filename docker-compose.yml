@@ -16,7 +16,29 @@ services:
       - WECHAT_OPEN_KFID=${WECHAT_OPEN_KFID}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - AI_API_KEY=${AI_API_KEY}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=kn-ai-redis
+      - REDIS_PORT=16379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DATABASE=${REDIS_DATABASE}
       - DOCKER_SERVER_PORT=${DOCKER_SERVER_PORT}
+    depends_on:
+      - redis
+    networks:
+      - kn-ai-network
+
+  redis:
+    image: redis:latest
+    container_name: kn-ai-redis
+    restart: always
+    command: redis-server --port 16379 --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - kn-ai-network
+
+networks:
+  kn-ai-network:
+    driver: bridge
+
+volumes:
+  redis_data:
