@@ -134,7 +134,6 @@ public class AiService {
                 JsonNode firstChoice = root.get("choices").get(0);
                 if (firstChoice.has("message") && firstChoice.get("message").has("content")) {
                     String contentJsonString = firstChoice.get("message").get("content").asText();
-                    
                     logger.info("准备解析AI内容JSON: {}", contentJsonString);
                     JsonNode contentRoot = objectMapper.readTree(contentJsonString);
                     
@@ -154,15 +153,58 @@ public class AiService {
     }
 
     /**
-     * 从AI返回的JSON内容中提取最终的回复文本.
-     * @param node JSON节点
-     * @return 回复文本
+     * 从任何结构的 JsonNode 中提取第一个找到的 'reply_text' 字段的值。
+     * 这个方法更加健壮，可以处理深度嵌套和数组。
+     * @param node Jackson 的 JsonNode 对象，可能为 null。
+     * @return 找到的 'reply_text' 内容，如果未找到或发生错误则返回默认提示。
      */
-    private String extractReplyText(JsonNode node) {
-        if (node != null && node.isObject() && node.has("answer") && node.get("answer").has("reply_text")) {
-            return node.get("answer").get("reply_text").asText();
+    public String extractReplyText(JsonNode node) {
+        if (node == null || node.isNull()) {
+            logger.warn("输入的JSON节点为null，无法解析。");
+            return "AI回复格式错误，无法解析。";
         }
-        logger.warn("未能从JSON节点中找到 'answer.reply_text' 路径: {}", node != null ? node.toString() : "null");
+        // 开始递归查找
+        String result = findReplyTextRecursively(node);
+        if (result != null) {
+            return result;
+        }
+        // 如果递归查找后仍然是 null，说明没有找到
+        logger.warn("未能在JSON节点中找到 'reply_text' 键: {}", node.toString());
         return "AI回复格式错误，无法解析。";
+    }
+
+    /**
+     * 递归地在 JsonNode 中查找 'reply_text' 键。
+     *
+     * @param node 当前要搜索的节点。
+     * @return 找到的文本值，或 null
+     */
+    private String findReplyTextRecursively(JsonNode node) {
+        // 基本情况1: 如果当前节点是对象并且直接包含 "reply_text"
+        if (node.isObject() && node.has("reply_text")) {
+            JsonNode replyNode = node.get("reply_text");
+            if (replyNode != null && replyNode.isTextual()) {
+                return replyNode.asText();
+            }
+        }
+        // 递归情况1: 如果当前节点是对象，则遍历其所有子节点
+        if (node.isObject()) {
+            for (JsonNode child : node) {
+                String result = findReplyTextRecursively(child);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        // 递归情况2: 如果当前节点是数组，则遍历其所有元素
+        if (node.isArray()) {
+            for (JsonNode element : node) {
+                String result = findReplyTextRecursively(element);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
     }
 }
