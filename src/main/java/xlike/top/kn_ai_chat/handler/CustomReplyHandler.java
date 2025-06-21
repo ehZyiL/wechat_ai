@@ -40,7 +40,7 @@ public class CustomReplyHandler implements MessageHandler {
      */
     @Override
     public boolean canHandle(String content, String externalUserId) {
-        // 直接查找是否存在对应的回复
+        // 查找是否存在对应的回复
         return customReplyService.findReplyForKeyword(content, externalUserId).isPresent();
     }
 
@@ -55,7 +55,6 @@ public class CustomReplyHandler implements MessageHandler {
      */
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
-        // 再次查找（因为 canHandle 的结果不会传递过来，这里做一次重复查找是必要的）
         // 然后将找到的文本包装成 TextReply 并返回
         return customReplyService.findReplyForKeyword(content, externalUserId)
                 .map(TextReply::new);

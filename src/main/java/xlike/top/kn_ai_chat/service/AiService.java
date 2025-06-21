@@ -31,7 +31,7 @@ public class AiService {
     private final UserConfigService userConfigService;
 
     /**
-     * 【修改】将固定的JSON指令定义为常量，以便复用.
+     * 固定的JSON指令
      */
     private static final String JSON_STRUCTURE_PROMPT = " 你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{\"answer\":{\"reply_text:'你好啊'}}],严格使用我的json结构。";
 
@@ -79,7 +79,7 @@ public class AiService {
     }
 
     /**
-     * 基于特定的背景知识(上下文)进行增强的问答(RAG).
+     * 基于特定的背景知识(上下文)进行增强的问答.
      * @param userQuestion 用户的问题
      * @param context 提供的背景知识
      * @param externalUserId 外部用户ID

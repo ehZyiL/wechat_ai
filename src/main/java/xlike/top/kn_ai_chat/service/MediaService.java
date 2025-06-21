@@ -32,9 +32,9 @@ public class MediaService {
 
     private static final Logger logger = LoggerFactory.getLogger(MediaService.class);
     
-    // 【最终修正】更精确的正则表达式，优先匹配 RFC 5987 标准的 filename*，并停止在分号
+
     private static final Pattern FILENAME_STAR_PATTERN = Pattern.compile("filename\\*=([^;]+)", Pattern.CASE_INSENSITIVE);
-    // 回退匹配非标准的 filename
+    // 匹配非标准的 filename
     private static final Pattern FILENAME_PATTERN = Pattern.compile("filename=\"([^\"]+)\"", Pattern.CASE_INSENSITIVE);
 
     private final RestTemplate restTemplate;
@@ -128,13 +128,12 @@ public class MediaService {
     }
 
     /**
-     * 【最终修正】从 Content-Disposition 头中智能解析文件名的辅助方法
+     * 从 Content-Disposition 头中智能解析文件名的辅助方法
      */
     private String parseFilenameFromDisposition(String disposition) {
         if (disposition == null) {
             return "unknown.tmp";
         }
-
         // 优先尝试解析 RFC 5987 的 filename*
         Matcher starMatcher = FILENAME_STAR_PATTERN.matcher(disposition);
         if (starMatcher.find()) {
@@ -151,7 +150,6 @@ public class MediaService {
                 }
             }
         }
-
         // 如果失败，回退到解析非标准的 filename
         Matcher plainMatcher = FILENAME_PATTERN.matcher(disposition);
         if (plainMatcher.find()) {

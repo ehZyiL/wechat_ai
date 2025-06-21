@@ -22,7 +22,7 @@ public interface MessageLogRepository extends JpaRepository<MessageLog, Long> {
     long countByFromUserOrToUser(String fromUser, String toUser);
 
     /**
-     * 【新增】根据发送者ID统计其发送的消息总数
+     * 根据发送者ID统计其发送的消息总数
      * @param fromUser 发送者ID (externalUserId)
      * @return 消息总数
      */

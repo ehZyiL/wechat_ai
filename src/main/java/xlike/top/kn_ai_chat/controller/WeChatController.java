@@ -66,16 +66,13 @@ public class WeChatController {
         String[] array = {token, timestamp, nonce, echostr};
         Arrays.sort(array);
         String sortedStr = String.join("", array);
-
         // 2. SHA1加密
         String calculatedSignature = WeChatUtils.sha1(sortedStr);
-
         // 3. 比较签名
         if (!calculatedSignature.equals(msgSignature)) {
             logger.error("签名验证失败! received_signature: {}, calculated_signature: {}", msgSignature, calculatedSignature);
             return "签名验证失败";
         }
-
         try {
             // 4. 解密echostr
             byte[] decryptedBytes = WeChatUtils.decrypt(WeChatUtils.base64Decode(echostr), encodingAesKeyBytes);

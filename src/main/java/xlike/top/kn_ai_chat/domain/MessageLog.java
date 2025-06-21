@@ -18,7 +18,7 @@ public class MessageLog {
     private Long id;
 
     /**
-     * 【新增】微信消息的唯一ID，用于持久化幂等性判断
+     * 微信消息的唯一ID，用于持久化幂等性判断
      */
     @Column(unique = true, nullable = true)
     private String msgId;

@@ -212,7 +212,6 @@ public class AdminController {
     }
 
 
-    // ... (block/unblock 等方法保持不变)
     @PostMapping("/api/users/{userId}/block")
     @ResponseBody
     public ResponseEntity<Void> blockUser(@PathVariable String userId, HttpSession session) {

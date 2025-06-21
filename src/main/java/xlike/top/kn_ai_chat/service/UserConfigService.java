@@ -27,7 +27,7 @@ public class UserConfigService {
     private final AiConfigRepository aiConfigRepository;
     private final KeywordConfigRepository keywordConfigRepository;
 
-    // Default AI Config values
+    // 默认AI配置
     @Value("${default.ai.base-url}")
     private String defaultAiBaseUrl;
     @Value("${default.ai.api-key}")
@@ -53,12 +53,11 @@ public class UserConfigService {
     private static final String JSON_STRUCTURE_PROMPT = " 你会用json回答用户的问题，回答的文本中，不要出现(描述)等特殊描述符号，和颜文字！并且json中只有一个reply_text，最好不要出现换行,例如[{\"answer\":{\"reply_text:'你好啊'}}],严格使用我的json结构，并且reply_text对应的内容不能超过2000字数。";
 
 
-    // Default Keywords. Using more specific names for SystemHandler's sub-commands
+    // 默认关键词
     private static final Map<String, List<String>> DEFAULT_KEYWORDS_MAP = Map.of(
             "DrawingHandler", Arrays.asList("画一张", "画一个", "画张", "画个"),
             "LotteryHandler", Arrays.asList("大乐透", "双色球", "今日中奖号码", "查彩票", "开奖"),
             "MenuHandler", Arrays.asList("菜单", "功能", "帮助", "你能做什么", "help", "menu"),
-            // SystemHandler sub-commands
             "SystemHandler_ClearHistory", Arrays.asList("清空历史对话", "清空记录", "清除历史对话","清空聊天记录"),
             "SystemHandler_QueryId", Arrays.asList("查询id", "我的id"),
             "SystemHandler_ChatStats", Arrays.asList("对话统计", "消息统计"),
@@ -92,12 +91,10 @@ public class UserConfigService {
             defaultConfig.setLastModified(LocalDateTime.now());
             return defaultConfig;
         });
-
         // 2. 过滤掉从数据库中可能读出的、包含内部指令的旧数据
         if (config.getSystemPrompt() != null && config.getSystemPrompt().contains(JSON_STRUCTURE_PROMPT)) {
             config.setSystemPrompt(config.getSystemPrompt().replace(JSON_STRUCTURE_PROMPT, ""));
         }
-
         // 3. 返回处理过的配置对象
         return config;
     }

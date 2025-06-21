@@ -36,9 +36,7 @@ public class VoiceReplyHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
-    /**
-     * 修改了方法签名，并将 "default" 替换为 externalUserId
-     */
+
     @Override
     public boolean canHandle(String content, String externalUserId) {
         return userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName())
@@ -46,9 +44,7 @@ public class VoiceReplyHandler implements MessageHandler {
                 .anyMatch(content::contains);
     }
 
-    /**
-     * 修改了 handle 方法，将 "default" 替换为 externalUserId
-     */
+
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
         List<String> triggerKeywords = userConfigService.getKeywordsForHandler(externalUserId, this.getClass().getSimpleName());

@@ -20,10 +20,10 @@ public class WeChatUser {
 
     private String nickname;
 
-    @Column(length = 512) // 头像URL可能较长
+    @Column(length = 512)
     private String avatar;
     
-    // info 字段可以保留用于存储API返回的完整JSON信息
+    //存储API返回的完整JSON信息
     @Column(columnDefinition = "TEXT")
     private String info;
 

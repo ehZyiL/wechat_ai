@@ -17,7 +17,7 @@ public interface KnowledgeBaseRepository extends JpaRepository<Knowledge, Long> 
     Optional<Knowledge> findByIdAndExternalUserId(Long id, String externalUserId);
 
     /**
-     * 【新增方法】根据用户ID删除其所有知识库条目
+     * 根据用户ID删除其所有知识库条目
      * @param externalUserId 用户的 external_userid
      */
     @Transactional

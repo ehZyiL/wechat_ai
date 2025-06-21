@@ -154,20 +154,16 @@ public class WeChatService {
 
                 if (root.path("errcode").asInt() != 0) {
                     logger.error("拉取消息(sync_msg)失败: {}", response);
-                    break; // 拉取失败，跳出循环
+                    break;
                 }
-                
                 // 获取新的游标并立即保存到Redis，无论本次是否处理了消息。
                 // 这是为了确保下次能从正确的位置开始拉取。
                 String nextCursor = root.path("next_cursor").asText(null);
                 if (nextCursor != null) {
                     redisTemplate.opsForValue().set(MSG_CURSOR_KEY, nextCursor);
-                    cursor = nextCursor; // 更新当前游标，用于下一轮循环（如果has_more=1）
+                    cursor = nextCursor;
                 }
-
                 JsonNode msgList = root.path("msg_list");
-                
-                // 只处理最后一​​条消息
                 if (msgList.isArray() && !msgList.isEmpty()) {
                     JsonNode latestMessage = msgList.get(msgList.size() - 1);
                     processSinglePulledMessage(latestMessage);
@@ -181,7 +177,7 @@ public class WeChatService {
 
             } catch (Exception e) {
                 logger.error("调用拉取消息(sync_msg)接口失败", e);
-                break; // 发生异常，跳出循环
+                break;
             }
         }
     }
@@ -213,7 +209,6 @@ public class WeChatService {
         if (!"UNKNOWN_USER".equals(externalUserId)) {
             weChatUserService.getOrCreateUser(externalUserId);
         }
-
         // 检查用户是否被拉黑，这一步已在MessageDispatcher中实现，此处为双重保险
         if(weChatUserService.isUserBlocked(externalUserId)) {
              logger.info("用户 [{}] 已被拉黑，拒绝回复此消息: {}", externalUserId, msgId);
@@ -241,8 +236,7 @@ public class WeChatService {
         redisTemplate.opsForValue().set(redisKey, "processed", 48, TimeUnit.HOURS);
     }
     
-    // ... 其他所有方法 (handleTextMessage, sendReply 等) 保持不变，无需修改 ...
-    // ... [代码已折叠，请保留您原来的这些方法] ...
+
     private void handleTextMessage(JsonNode msgNode, String externalUserId, String openKfid) {
         String userContent = msgNode.get("text").get("content").asText().trim();
         saveMessageLog(msgNode.get("msgid").asText(), externalUserId, openKfid, "text", userContent);

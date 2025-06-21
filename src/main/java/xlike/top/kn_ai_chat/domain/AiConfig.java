@@ -30,7 +30,6 @@ public class AiConfig {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String systemPrompt;
 
-    // SiliconFlow specific configurations
     @Column(nullable = false)
     private String sfBaseUrl;
 

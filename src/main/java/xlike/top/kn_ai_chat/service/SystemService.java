@@ -70,8 +70,6 @@ public class SystemService {
             if (userMessages.isEmpty()) {
                 return "您还没有问过任何问题。";
             }
-
-            // 使用 Stream API 和 StringBuilder 高效格式化字符串
             StringBuilder sb = new StringBuilder("您最近的提问记录如下：\n");
             for (int i = 0; i < userMessages.size(); i++) {
                 MessageLog msg = userMessages.get(i);
@@ -80,11 +78,8 @@ public class SystemService {
                         msg.getTimestamp().format(FORMATTER),
                         msg.getContent()));
             }
-            // 移除最后一个换行符
-            sb.setLength(sb.length() - 1); 
-            
+            sb.setLength(sb.length() - 1);
             return sb.toString();
-
         } catch (Exception e) {
             logger.error("查询用户 [{}] 的提问记录时发生错误。", userId, e);
             return "❌ 查询提问记录失败，请稍后再试。";

@@ -43,7 +43,6 @@ public class ImageCompressionUtil {
             // 2. 创建一个用于存放压缩后图片的新临时文件
             File compressedFile = File.createTempFile("compressed-", ".jpg");
             compressedFile.deleteOnExit();
-
             // 3. 执行压缩
             //    - scale(1.0) 保持原始尺寸不变
             //    - outputQuality(0.85) 设置一个初始的较高质量

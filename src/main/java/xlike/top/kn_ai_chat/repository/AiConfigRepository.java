@@ -14,7 +14,7 @@ public interface AiConfigRepository extends JpaRepository<AiConfig, String> {
     Optional<AiConfig> findByExternalUserId(String externalUserId);
 
     /**
-     * 【新增】根据用户ID删除其AI配置
+     * 根据用户ID删除其AI配置
      * @param externalUserId 用户的 externalUserId
      */
     @Transactional

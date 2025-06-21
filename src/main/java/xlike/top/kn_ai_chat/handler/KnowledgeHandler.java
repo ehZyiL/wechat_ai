@@ -35,9 +35,7 @@ public class KnowledgeHandler implements MessageHandler {
         this.userConfigService = userConfigService;
     }
 
-    /**
-     * 修改了方法签名，并将 "default" 替换为 externalUserId
-     */
+
     @Override
     public boolean canHandle(String content, String externalUserId) {
         String lowerCaseContent = content.toLowerCase();

@@ -19,7 +19,6 @@ public class PageController {
 
     @GetMapping("/config")
     public String configPage(@RequestParam(required = false) String externalUserId, Model model, HttpSession session) {
-        // 检查 session 中是否有登录标记
         if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
             return "redirect:/admin/login";
         }
@@ -29,7 +28,7 @@ public class PageController {
     }
     
     /**
-     * 【新增】文件管理页面路由
+     * 文件管理页面路由
      */
     @GetMapping("/files")
     public String filesPage(@RequestParam String externalUserId, Model model, HttpSession session) {

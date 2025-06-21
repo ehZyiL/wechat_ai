@@ -74,7 +74,7 @@ public class KnowledgeBaseService {
     }
 
     /**
-     * 获取格式化后的文件列表字符串，供聊天机器人使用
+     * 获取格式化后的文件列表字符串
      *
      * @param externalUserId 用户ID
      * @return 格式化后的文件列表字符串
@@ -98,7 +98,7 @@ public class KnowledgeBaseService {
 
 
     /**
-     * 为指定用户删除一个知识库文件（供聊天机器人调用）
+     * 为指定用户删除一个知识库文件
      *
      * @param id             文件ID
      * @param externalUserId 用户ID
@@ -118,7 +118,7 @@ public class KnowledgeBaseService {
 
 
     /**
-     * 为指定用户删除所有知识库文件（供聊天机器人调用）
+     * 为指定用户删除所有知识库文件
      *
      * @param externalUserId 用户ID
      * @return 操作结果的描述文本
@@ -136,7 +136,7 @@ public class KnowledgeBaseService {
     }
 
     /**
-     * 【新增方法】根据用户ID删除其所有的知识库记录（供管理后台调用）
+     * 据用户ID删除其所有的知识库记录（供管理后台调用）
      * 此方法应在一个事务中被调用，且不返回用户提示信息。
      * @param externalUserId 用户的 externalUserId
      */

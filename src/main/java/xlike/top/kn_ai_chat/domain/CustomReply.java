@@ -18,8 +18,7 @@ public class CustomReply {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //
-    // 匹配方式
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchType matchType;
