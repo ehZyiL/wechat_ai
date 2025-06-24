@@ -10,7 +10,7 @@ import xlike.top.kn_ai_chat.service.CustomReplyService;
 import java.util.List;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @RestController
 @RequestMapping("/admin/api/custom-replies")

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @Service
 @RequiredArgsConstructor
@@ -20,7 +20,9 @@ public class CustomReplyService {
     private final CustomReplyRepository customReplyRepository;
 
     private String normalizeKeyword(String input) {
-        if (input == null) return null;
+        if (input == null) {
+            return null;
+        }
         return input.toLowerCase().replaceAll("[\\p{P}\\p{S}\\s]", "");
     }
 

@@ -6,7 +6,7 @@ import xlike.top.kn_ai_chat.domain.CustomReply;
 import java.util.List;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 public interface CustomReplyRepository extends JpaRepository<CustomReply, Long> {
 

@@ -1,7 +1,7 @@
 package xlike.top.kn_ai_chat.enums;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 
 public enum MatchType {

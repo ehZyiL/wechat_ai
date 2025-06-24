@@ -8,7 +8,7 @@ import xlike.top.kn_ai_chat.enums.MatchType;
 import java.time.LocalDateTime;
 
 /**
- * @author Administrator
+ * @author xlike
  */
 @Data
 @Entity

@@ -26,6 +26,17 @@ public class PageController {
         model.addAttribute("externalUserId", externalUserId != null ? externalUserId : "");
         return "config";
     }
+
+    /**
+     * MCP管理页面路由
+     */
+    @GetMapping("/admin/mcp-management")
+    public String mcpManagementPage(HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
+            return "redirect:/admin/login";
+        }
+        return "mcp-management";
+    }
     
     /**
      * 文件管理页面路由

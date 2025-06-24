@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP 权限管理 - 高级视图</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* --- 全局与色彩定义 --- */
+        :root {
+            --bs-primary-rgb: 67, 56, 202; /* Indigo-700 */
+            --bs-primary-light-rgb: 238, 242, 255; /* Indigo-50 */
+            --bs-success-rgb: 5, 150, 105;  /* Emerald-600 */
+            --bs-danger-rgb: 220, 38, 38;   /* Red-600 */
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+        }
+        body {
+            background-color: var(--slate-100);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- 卡片与布局 --- */
+        .card {
+            border: none;
+            border-radius: 0.75rem; /* 更大的圆角 */
+            background-color: #fff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .card-footer {
+            background-color: var(--slate-50);
+            border-top: 1px solid var(--slate-200);
+        }
+
+        /* --- 按钮与交互 --- */
+        .btn {
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            padding: 0.6rem 1.2rem;
+        }
+        .btn-primary {
+            box-shadow: 0 1px 2px 0 rgba(var(--bs-primary-rgb), 0.2);
+        }
+
+        /* --- 模态框 (Modal) --- */
+        .modal-content {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .user-list-container {
+            max-height: 55vh;
+            overflow-y: auto;
+            padding: 0.25rem;
+        }
+        .user-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+        .user-list-item:hover {
+            background-color: var(--slate-100);
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* --- 开关 (Toggle Switch) --- */
+        .form-switch .form-check-input {
+            width: 2.75em;
+            height: 1.5em;
+            cursor: pointer;
+        }
+        .form-check-input:checked {
+            background-color: rgb(var(--bs-primary-rgb));
+            border-color: rgb(var(--bs-primary-rgb));
+        }
+
+        /* --- 其他 --- */
+        .progress {
+            height: 10px;
+            border-radius: 0.5rem;
+        }
+        .progress-bar {
+            background-color: rgb(var(--bs-primary-rgb));
+        }
+        .page-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-bottom: 1px solid var(--slate-200);
+        }
+        #status-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1060;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <header class="page-header d-flex justify-content-between align-items-center">
+        <h1 class="h4 mb-0 text-slate-800 fw-bold">
+            <i class="bi bi-diagram-3-fill me-2 text-primary"></i>MCP 服务权限中心
+        </h1>
+        <a href="/admin/users" class="btn btn-sm btn-light bg-white border"><i class="bi bi-arrow-left me-1"></i>返回用户列表</a>
+    </header>
+
+    <div id="mcp-list-container" class="row gy-4">
+        <div class="col-12 text-center p-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+            <p class="mt-3 text-muted">正在加载 MCP 服务...</p>
+        </div>
+    </div>
+</div>
+
+<!-- 用户管理模态框 -->
+<div class="modal fade" id="userManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fs-6 fw-bold text-slate-700" id="userManagementModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="text" id="userSearchInput" class="form-control form-control-lg mb-3" placeholder="按昵称搜索用户...">
+                <div id="userListContainer" class="user-list-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作反馈 Toast -->
+<div class="toast-container" id="status-toast">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div id="toast-body" class="toast-body"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+    let users = [], mcpConfigs = [], permissions = {};
+    let toastInstance, userManagementModal;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        toastInstance = new bootstrap.Toast(document.getElementById('toast'));
+        userManagementModal = new bootstrap.Modal(document.getElementById('userManagementModal'));
+        document.getElementById('userSearchInput').addEventListener('input', (e) => filterUsers(e.target.value));
+        loadData();
+    });
+
+    async function loadData() {
+        try {
+            const [usersRes, configsRes, permsRes] = await Promise.all([
+                fetch('/admin/api/users'), fetch('/admin/api/mcp/configs'), fetch('/admin/api/mcp/permissions')
+            ]);
+            if (![usersRes, configsRes, permsRes].every(res => res.ok)) {
+                if (usersRes.status === 401) window.location.href = '/admin/login';
+                throw new Error('数据加载失败，请检查后台服务或您的登录状态。');
+            }
+            users = (await usersRes.json()).map(dto => dto.user);
+            mcpConfigs = await configsRes.json();
+            permissions = await permsRes.json();
+            renderUI();
+        } catch (error) {
+            document.getElementById('mcp-list-container').innerHTML = `<div class="col-12"><div class="alert alert-danger">${error.message}</div></div>`;
+        }
+    }
+
+    function renderUI() {
+        const container = document.getElementById('mcp-list-container');
+        if (mcpConfigs.length === 0) {
+            container.innerHTML = '<div class="col-12"><div class="alert alert-info text-center">未发现任何 MCP 配置。</div></div>';
+            return;
+        }
+        container.innerHTML = '';
+        mcpConfigs.forEach(config => {
+            const authCount = users.filter(u => permissions[u.externalUserId]?.includes(config.id)).length;
+            const progress = users.length > 0 ? (authCount / users.length) * 100 : 0;
+            const col = document.createElement('div');
+            col.className = 'col-xl-4 col-lg-6 col-md-12';
+            col.innerHTML = `
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex align-items-center mb-1">
+                            <i class="bi bi-cpu-fill me-2 text-primary"></i>${escapeHtml(config.name)}
+                        </h5>
+                        <p class="card-text text-muted small mb-3" title="${escapeHtml(config.url)}">
+                           ${escapeHtml(config.url)}
+                        </p>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small fw-medium text-slate-500">授权统计</span>
+                                <span class="small fw-bold text-slate-700">${authCount} / ${users.length}</span>
+                            </div>
+                            <div class="progress"><div class="progress-bar" style="width: ${progress}%"></div></div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                         <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="batchUpdate(${config.id}, false)">全部撤销</button>
+                            <button class="btn btn-sm btn-outline-success ms-2" onclick="batchUpdate(${config.id}, true)">全部授权</button>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="openUserModal(${config.id}, '${escapeHtml(config.name)}')">
+                            <i class="bi bi-people-fill me-1"></i>管理
+                        </button>
+                    </div>
+                </div>`;
+            container.appendChild(col);
+        });
+    }
+
+    function openUserModal(mcpId, mcpName) {
+        document.getElementById('userManagementModalLabel').innerHTML = `<i class="bi bi-cpu-fill me-2"></i>管理“${mcpName}”权限`;
+        document.getElementById('userSearchInput').value = '';
+        document.getElementById('userListContainer').dataset.mcpId = mcpId;
+        renderUserListForModal(mcpId);
+        userManagementModal.show();
+    }
+
+    function renderUserListForModal(mcpId, searchTerm = '') {
+        const container = document.getElementById('userListContainer');
+        const filteredUsers = users.filter(u => (u.nickname || u.externalUserId).toLowerCase().includes(searchTerm.toLowerCase()));
+        if (filteredUsers.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center p-5">没有找到匹配的用户。</p>';
+            return;
+        }
+        container.innerHTML = filteredUsers.map(user => {
+            const hasPerm = permissions[user.externalUserId]?.includes(mcpId) ?? false;
+            const nickname = user.nickname || user.externalUserId;
+            return `
+                <div class="user-list-item">
+                    <div class="d-flex align-items-center text-truncate">
+                        <img src="${escapeHtml(user.avatar)}" class="avatar me-3" alt="">
+                        <span class="fw-medium text-slate-700 text-truncate" title="${escapeHtml(nickname)}">${escapeHtml(nickname)}</span>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" ${hasPerm ? 'checked' : ''}
+                            onchange="updatePermission('${user.externalUserId}', ${mcpId}, this.checked)">
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function filterUsers(term) {
+        const mcpId = parseInt(document.getElementById('userListContainer').dataset.mcpId);
+        renderUserListForModal(mcpId, term);
+    }
+
+    async function updatePermission(userId, mcpId, grant) {
+        showToast('正在更新...', 'bg-primary');
+        try {
+            const response = await fetch('/admin/api/mcp/permissions/update', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ externalUserId: userId, mcpConfigId: mcpId, grant: grant })
+            });
+            if (!response.ok) throw new Error('请求失败');
+            permissions[userId] = permissions[userId] || [];
+            if (grant) {
+                if (!permissions[userId].includes(mcpId)) permissions[userId].push(mcpId);
+            } else {
+                permissions[userId] = permissions[userId].filter(id => id !== mcpId);
+            }
+            showToast('更新成功!', 'bg-success');
+            renderUI(); // Re-render main UI for progress bar update
+        } catch (error) {
+            showToast(`更新失败: ${error.message}`, 'bg-danger');
+            // Revert switch on failure, but we need a better way to find it. The ID is complex.
+            // For simplicity, we just reload the user list in the modal on error.
+            if(userManagementModal._isShown) renderUserListForModal(mcpId, document.getElementById('userSearchInput').value);
+        }
+    }
+
+    async function batchUpdate(mcpId, grant) {
+        const actionText = grant ? '全部授权' : '全部撤销';
+        if (!confirm(`确定要为该服务执行“${actionText}”操作吗？\n此操作将影响所有 ${users.length} 个用户。`)) return;
+
+        showToast(`正在${actionText}...`, 'bg-primary');
+        try {
+            const response = await fetch('/admin/api/mcp/permissions/batch', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mcpConfigId: mcpId, grant: grant })
+            });
+            if (!response.ok) throw new Error('请求失败');
+            showToast('批量操作成功!', 'bg-success');
+            await loadData();
+            if (userManagementModal._isShown) {
+                renderUserListForModal(mcpId, document.getElementById('userSearchInput').value);
+            }
+        } catch (error) {
+            showToast(`批量操作失败: ${error.message}`, 'bg-danger');
+        }
+    }
+
+    function showToast(message, className) {
+        const toastEl = document.getElementById('toast');
+        const toastBody = document.getElementById('toast-body');
+        toastBody.textContent = message;
+        toastEl.className = 'toast align-items-center text-white border-0 ' + className;
+        toastInstance.show();
+    }
+
+    function escapeHtml(text) {
+        return text?.toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]) || '';
+    }
+</script>
+</body>
+</html>
