@@ -49,5 +49,19 @@ public class AiConfig {
     private String sfVlmModel;
 
     @Column(nullable = false)
+    private boolean ragEnabled = false;
+
+    // 新增Rag字段
+    @Column
+    private String ragModel;
+
+    @Column
+    private String ragBaseUrl;
+
+    @Column
+    private String ragApiKey;
+
+
+    @Column(nullable = false)
     private LocalDateTime lastModified;
 }

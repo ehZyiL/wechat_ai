@@ -6,42 +6,45 @@
     <title>AI 助手配置中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         /* --- 全局美化 --- */
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-            color: #333;
+            background: #f8f9fa;
+            font-family: 'Noto Sans SC', sans-serif;
+            color: #343a40;
         }
 
         /* --- 标题样式 --- */
         .app-title {
-            font-weight: bold;
-            color: #1a2a4c;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-weight: 700;
+            color: #2c3e50;
         }
 
         /* --- 主卡片容器 --- */
         .main-card {
             border: none;
-            border-radius: 15px;
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-        }
-
-        .main-card:hover {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
         }
 
         /* --- Tab 导航 --- */
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
         .nav-tabs .nav-link {
-            color: #555;
+            color: #495057;
             font-weight: 500;
-            border-width: 0 0 3px 0;
-            border-color: transparent;
-            transition: all 0.3s ease;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-right: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            padding: 0.75rem 1.25rem;
         }
 
         .nav-tabs .nav-link.active,
@@ -56,56 +59,88 @@
             color: #0d6efd;
         }
 
-        /* --- 表单元素 --- */
-        .form-label {
-            font-weight: 600;
-            color: #1a2a4c;
+        /* Tab 内容区域样式 */
+        .tab-content {
+            padding-top: 1.5rem;
         }
 
-        .form-control {
+        /* --- 表单元素 --- */
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        .form-control, .form-select, .form-check-input {
             border-radius: 8px;
             border: 1px solid #ced4da;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
         }
         .form-control:focus {
             border-color: #86b7fe;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
         }
+        .input-group-text {
+            background-color: #e9ecef;
+            border-radius: 8px 0 0 8px;
+        }
+        .form-control[type="password"] {
+            border-left: 0;
+        }
 
-        /* --- 【新增】美化关键词配置卡片 --- */
+        /* RAG 开关样式 */
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+        }
+
+        /* 关键词卡片 */
         .keyword-card {
             transition: all 0.3s ease;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
         }
         .keyword-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
-        .card-header.bg-light-blue {
-            background-color: #e7f1ff;
-        }
-
-        /* --- 状态消息 --- */
-        #statusMessage {
-            transition: all 0.5s ease;
+        .keyword-card .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
         }
 
         /* --- 加载动画 --- */
         .loader {
-            display: none; /* 默认隐藏 */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            z-index: 9999;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1056; /* 比模态框更高 */
         }
         .spinner-border {
-            width: 3rem;
-            height: 3rem;
+            width: 3.5rem;
+            height: 3.5rem;
             position: absolute;
             top: 50%;
             left: 50%;
+            margin-top: -1.75rem;
+            margin-left: -1.75rem;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        /* Section 标题 */
+        .section-title {
+            color: #343a40;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
@@ -118,51 +153,61 @@
 </div>
 
 <div class="container my-5">
-    <h1 class="text-center mb-4 app-title"><i class="bi bi-robot"></i> AI 助手配置中心</h1>
-    <div class="card shadow-lg p-md-4 mb-5 bg-white rounded main-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="app-title"><i class="bi bi-robot me-2"></i>AI 助手配置中心</h1>
+        <a href="/admin/users" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>返回用户列表</a>
+    </div>
+
+    <div class="card p-lg-4 mb-5 main-card">
         <div class="card-body">
             <form id="configForm">
                 <div class="mb-4">
-                    <label for="externalUserId" class="form-label"><i class="bi bi-person-badge"></i> 用户 ID (External User ID)</label>
+                    <label for="externalUserId" class="form-label fs-5"><i class="bi bi-person-badge"></i> 用户 ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="请输入用户ID或'default'以配置全局默认值" required>
-                        <button class="btn btn-secondary" type="button" id="loadConfigBtn"><i class="bi bi-download me-1"></i>加载配置</button>
-                        <button class="btn btn-info" type="button" id="resetConfigBtn"><i class="bi bi-arrow-counterclockwise me-1"></i>重置为默认</button>
+                        <input type="text" class="form-control form-control-lg" id="externalUserId" name="externalUserId" th:value="${externalUserId}" placeholder="输入用户ID, 或 'default' 配置全局默认" required>
+                        <button class="btn btn-outline-primary" type="button" id="loadConfigBtn"><i class="bi bi-download me-1"></i>加载</button>
+                        <button class="btn btn-outline-info" type="button" id="resetConfigBtn"><i class="bi bi-arrow-counterclockwise me-1"></i>重置</button>
                     </div>
                 </div>
 
-                <ul class="nav nav-tabs mb-3" id="configTabs" role="tablist">
+                <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="ai-config-tab" data-bs-toggle="tab" data-bs-target="#ai-config" type="button" role="tab" aria-controls="ai-config" aria-selected="true"><i class="bi bi-cpu"></i> AI 模型配置</button>
+                        <button class="nav-link active" id="ai-config-tab" data-bs-toggle="tab" data-bs-target="#ai-config" type="button" role="tab" aria-controls="ai-config" aria-selected="true"><i class="bi bi-cpu-fill me-2"></i>AI 模型</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="keyword-config-tab" data-bs-toggle="tab" data-bs-target="#keyword-config" type="button" role="tab" aria-controls="keyword-config" aria-selected="false"><i class="bi bi-key"></i> 关键词配置</button>
+                        <button class="nav-link" id="rag-config-tab" data-bs-toggle="tab" data-bs-target="#rag-config" type="button" role="tab" aria-controls="rag-config" aria-selected="false"><i class="bi bi-magnet-fill me-2"></i>RAG 增强</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="keyword-config-tab" data-bs-toggle="tab" data-bs-target="#keyword-config" type="button" role="tab" aria-controls="keyword-config" aria-selected="false"><i class="bi bi-key-fill me-2"></i>关键词</button>
                     </li>
                 </ul>
 
                 <div class="tab-content" id="configTabsContent">
                     <div class="tab-pane fade show active" id="ai-config" role="tabpanel" aria-labelledby="ai-config-tab">
-                        <h3 class="mb-4 section-title">核心模型配置</h3>
+                        <h4 class="section-title">核心聊天模型</h4>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="aiBaseUrl" class="form-label">AI API 基础地址</label>
-                                <input type="url" class="form-control" id="aiBaseUrl" name="aiBaseUrl" required>
+                                <label for="aiBaseUrl" class="form-label">API 基础地址 (Base URL)</label>
+                                <input type="url" class="form-control" id="aiBaseUrl" name="aiBaseUrl" placeholder="例如: https://api.siliconflow.cn/v1" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="aiModel" class="form-label">AI 模型名称</label>
-                                <input type="text" class="form-control" id="aiModel" name="aiModel" required>
+                                <label for="aiModel" class="form-label">模型名称 (Model)</label>
+                                <input type="text" class="form-control" id="aiModel" name="aiModel" placeholder="例如: deepseek-ai/DeepSeek-V3" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="aiApiKey" class="form-label">AI API 密钥</label>
-                            <input type="password" class="form-control" id="aiApiKey" name="aiApiKey" required>
+                            <label for="aiApiKey" class="form-label">API 密钥 (API Key)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control" id="aiApiKey" name="aiApiKey" placeholder="如果无需修改，请保持为空" required>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="systemPrompt" class="form-label">系统提示词 (System Prompt)</label>
-                            <textarea class="form-control" id="systemPrompt" name="systemPrompt" rows="4" required></textarea>
+                            <textarea class="form-control" id="systemPrompt" name="systemPrompt" rows="3" required></textarea>
                         </div>
                         <hr class="my-4">
-                        <h3 class="section-title">多媒体模型配置 (SiliconFlow)</h3>
+                        <h4 class="section-title">多媒体模型 (SiliconFlow)</h4>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="sfBaseUrl" class="form-label">SiliconFlow 基础地址</label>
@@ -189,109 +234,102 @@
                                 <input type="text" class="form-control" id="sfVlmModel" name="sfVlmModel" required>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary w-100 mt-3" onclick="saveAiConfig()"><i class="bi bi-save"></i> 保存 AI 配置</button>
+                    </div>
+
+                    <div class="tab-pane fade" id="rag-config" role="tabpanel" aria-labelledby="rag-config-tab">
+                        <h4 class="section-title">RAG (检索增强生成)</h4>
+                        <div class="form-check form-switch mb-4 p-0 d-flex align-items-center">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="ragEnabled" name="ragEnabled" style="font-size: 1.5rem;">
+                            <label class="form-check-label fs-5" for="ragEnabled">启用 RAG 知识库增强问答模式</label>
+                        </div>
+                        <p class="form-text">启用后，知识库问答将使用 Embedding 模型进行语义检索，回答更精准，但会增加 Token 消耗。关闭则使用传统上下文填充模式。</p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="ragBaseUrl" class="form-label">Embedding API 基础地址</label>
+                                <input type="url" class="form-control" id="ragBaseUrl" name="ragBaseUrl" placeholder="例如: https://api.siliconflow.cn/v1">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="ragModel" class="form-label">Embedding 模型名称</label>
+                                <input type="text" class="form-control" id="ragModel" name="ragModel" placeholder="例如: Qwen/Qwen2-7B-Instruct">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ragApiKey" class="form-label">Embedding API 密钥</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control" id="ragApiKey" name="ragApiKey" placeholder="如果与主AI Key相同，可留空">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="tab-pane fade" id="keyword-config" role="tabpanel" aria-labelledby="keyword-config-tab">
-                        <p class="text-muted mb-4">请用英文逗号 (,) 分隔每个关键词。修改后请点击对应模块的“保存”按钮。</p>
+                        <p class="text-muted mb-4">为各项功能设置触发关键词，用英文逗号 (,) 分隔。修改后请点击下方的“保存所有配置”按钮统一保存。</p>
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-palette-fill me-2 text-primary"></i>绘画</h6>
-                                    </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-palette-fill me-2 text-primary"></i>绘画 (DrawingHandler)</h6></div>
                                     <div class="card-body">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control keyword-input" id="DrawingHandler" data-handler="DrawingHandler" placeholder="例如: 画,绘画,drawing">
-                                            <button class="btn btn-outline-primary" type="button" onclick="saveKeywords('DrawingHandler')"><i class="bi bi-save"></i> 保存</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-ticket-detailed-fill me-2 text-success"></i>彩票</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control keyword-input" id="LotteryHandler" data-handler="LotteryHandler" placeholder="例如: 大乐透,双色球,开奖">
-                                            <button class="btn btn-outline-success" type="button" onclick="saveKeywords('LotteryHandler')"><i class="bi bi-save"></i> 保存</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2 text-info"></i>菜单</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control keyword-input" id="MenuHandler" data-handler="MenuHandler" placeholder="例如: 菜单,帮助,help">
-                                            <button class="btn btn-outline-info" type="button" onclick="saveKeywords('MenuHandler')"><i class="bi bi-save"></i> 保存</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-mic-fill me-2 text-danger"></i>语音回复</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control keyword-input" id="VoiceReplyHandler" data-handler="VoiceReplyHandler" placeholder="例如: 语音回答,用嘴说">
-                                            <button class="btn btn-outline-danger" type="button" onclick="saveKeywords('VoiceReplyHandler')"><i class="bi bi-save"></i> 保存</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-book-half me-2 text-secondary"></i>知识库问答</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
-                                            <button class="btn btn-outline-secondary" type="button" onclick="saveKeywords('KnowledgeHandler')"><i class="bi bi-save"></i> 保存</button>
-                                        </div>
+                                        <input type="text" class="form-control keyword-input" id="DrawingHandler" data-handler="DrawingHandler" placeholder="例如: 画,绘画,drawing">
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-md-6">
-                                <div class="card shadow-sm mb-4 keyword-card">
-                                    <div class="card-header bg-light-blue">
-                                        <h6 class="mb-0 fw-bold"><i class="bi bi-terminal-fill me-2 text-dark"></i>系统指令</h6>
-                                    </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-ticket-detailed-fill me-2 text-success"></i>彩票 (LotteryHandler)</h6></div>
                                     <div class="card-body">
-                                        <div class="mb-3">
-                                            <label for="SystemHandler_ClearHistory" class="form-label small">清空历史对话</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control keyword-input" id="SystemHandler_ClearHistory" data-handler="SystemHandler_ClearHistory">
-                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_ClearHistory')"><i class="bi bi-save"></i></button>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="SystemHandler_QueryId" class="form-label small">查询ID</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control keyword-input" id="SystemHandler_QueryId" data-handler="SystemHandler_QueryId">
-                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_QueryId')"><i class="bi bi-save"></i></button>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="SystemHandler_ChatStats" class="form-label small">对话统计</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control keyword-input" id="SystemHandler_ChatStats" data-handler="SystemHandler_ChatStats">
-                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_ChatStats')"><i class="bi bi-save"></i></button>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="SystemHandler_UserQuestions" class="form-label small">用户提问记录</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control keyword-input" id="SystemHandler_UserQuestions" data-handler="SystemHandler_UserQuestions">
-                                                <button class="btn btn-outline-dark btn-sm" type="button" onclick="saveKeywords('SystemHandler_UserQuestions')"><i class="bi bi-save"></i></button>
-                                            </div>
-                                        </div>
+                                        <input type="text" class="form-control keyword-input" id="LotteryHandler" data-handler="LotteryHandler" placeholder="例如: 大乐透,双色球,开奖">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2 text-info"></i>菜单 (MenuHandler)</h6></div>
+                                    <div class="card-body">
+                                        <input type="text" class="form-control keyword-input" id="MenuHandler" data-handler="MenuHandler" placeholder="例如: 菜单,帮助,help">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-mic-fill me-2 text-danger"></i>语音回复 (VoiceReplyHandler)</h6></div>
+                                    <div class="card-body">
+                                        <input type="text" class="form-control keyword-input" id="VoiceReplyHandler" data-handler="VoiceReplyHandler" placeholder="例如: 语音回答,用嘴说">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-book-half me-2 text-secondary"></i>知识库 (KnowledgeHandler)</h6></div>
+                                    <div class="card-body">
+                                        <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-terminal-fill me-2 text-dark"></i>系统指令 (SystemHandler)</h6></div>
+                                    <div class="card-body">
+                                        <label class="form-label small">清空历史对话</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="SystemHandler_ClearHistory" data-handler="SystemHandler_ClearHistory">
+
+                                        <label class="form-label small">查询ID</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="SystemHandler_QueryId" data-handler="SystemHandler_QueryId">
+
+                                        <label class="form-label small">对话统计</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="SystemHandler_ChatStats" data-handler="SystemHandler_ChatStats">
+
+                                        <label class="form-label small">用户提问记录</label>
+                                        <input type="text" class="form-control keyword-input" id="SystemHandler_UserQuestions" data-handler="SystemHandler_UserQuestions">
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-top">
+                    <button type="button" class="btn btn-primary w-100 btn-lg" id="saveAllBtn"><i class="bi bi-save2-fill me-2"></i>保存所有配置</button>
                 </div>
             </form>
             <div id="statusMessage" class="mt-4"></div>
@@ -316,15 +354,12 @@
                                 ${message}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                              </div>`;
-        // 自动滚动到消息位置
         statusDiv.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // 新增：清空所有表单字段的函数
     function clearAllForms() {
-        // 清空AI配置表单
         configForm.reset();
-        // 清空所有关键词输入框
+        document.getElementById('ragEnabled').checked = false; // 确保开关也被重置
         document.querySelectorAll('.keyword-input').forEach(input => input.value = '');
     }
 
@@ -334,15 +369,20 @@
             const response = await fetch(`${API_BASE_URL}/ai/${userId}`);
             if (!response.ok) throw new Error(`无法加载AI配置: ${response.statusText}`);
             const config = await response.json();
-            // 填充表单
+
             for (const key in config) {
                 const element = document.getElementById(key);
                 if (element) {
-                    element.value = config[key];
+                    if (element.type === 'checkbox') {
+                        element.checked = config[key];
+                    } else {
+                        element.value = config[key] || ''; // 处理null值
+                    }
                 }
             }
         } catch (error) {
             showStatusMessage(`加载AI配置失败: ${error.message}`, true);
+            throw error;
         }
     }
 
@@ -360,6 +400,7 @@
             }
         } catch (error) {
             showStatusMessage(`加载关键词失败: ${error.message}`, true);
+            throw error;
         }
     }
 
@@ -370,9 +411,7 @@
             return;
         }
 
-        // 修改：加载前先清空旧数据
         clearAllForms();
-        // 重新设置userId，因为clearAllForms会清空它
         document.getElementById('externalUserId').value = userId;
 
         showLoader();
@@ -383,108 +422,121 @@
             ]);
             showStatusMessage(`用户 [${userId}] 的配置已成功加载！`, false);
         } catch (error) {
-            showStatusMessage(`加载配置时发生未知错误: ${error.message}`, true);
+            console.error(error);
         } finally {
             hideLoader();
         }
     }
 
-    // 新增：重置为默认值的函数
     async function resetToDefault() {
         const currentUserId = document.getElementById('externalUserId').value.trim();
-        if (!currentUserId) {
-            showStatusMessage("请输入您想为其重置配置的用户ID。", true);
+        if (!currentUserId || currentUserId === 'default') {
+            showStatusMessage("请输入一个非'default'的用户ID以重置其配置。", true);
             return;
         }
 
-        const confirmation = confirm(`您确定要用全局默认配置覆盖当前表单内容吗？\n\n这将会为用户 [${currentUserId}] 加载'default'的配置。\n您需要手动点击“保存”按钮来使更改生效。`);
+        const confirmation = confirm(`您确定要用全局默认配置覆盖当前表单内容吗？\n\n这将为用户 [${currentUserId}] 加载'default'的配置。\n您需要手动点击“保存所有配置”按钮来使更改生效。`);
         if (!confirmation) return;
 
         showLoader();
         try {
-            // 关键：加载'default'用户的配置来填充表单
+            clearAllForms();
+            document.getElementById('externalUserId').value = currentUserId; // 恢复当前用户ID
+
             await Promise.all([
                 loadAiConfig('default'),
                 loadAllKeywords('default')
             ]);
             showStatusMessage("表单已重置为全局默认配置。请检查后点击“保存”以应用到当前用户。", false);
         } catch (error) {
-            showStatusMessage(`重置配置时出错: ${error.message}`, true);
+            console.error(error);
         } finally {
             hideLoader();
         }
     }
 
-
-    async function saveAiConfig() {
-        const formData = new FormData(configForm);
-        const configData = {};
-        formData.forEach((value, key) => { configData[key] = value; });
-
-        const userId = configData.externalUserId.trim();
+    async function saveAllConfigs() {
+        const userId = document.getElementById('externalUserId').value.trim();
         if (!userId) {
             showStatusMessage("用户ID不能为空！", true);
             return;
         }
+
         showLoader();
         try {
-            const response = await fetch(`${API_BASE_URL}/ai`, {
+            // 1. 保存AI和RAG配置
+            const formData = new FormData(configForm);
+            const configData = {};
+            formData.forEach((value, key) => { configData[key] = value; });
+            configData.ragEnabled = document.getElementById('ragEnabled').checked;
+
+            const aiResponse = await fetch(`${API_BASE_URL}/ai`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configData),
             });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`保存失败: ${response.statusText} - ${errorText}`);
+            if (!aiResponse.ok) {
+                const errorText = await aiResponse.text();
+                throw new Error(`保存AI配置失败: ${aiResponse.statusText} - ${errorText}`);
             }
-            showStatusMessage(`用户 [${userId}] 的 AI 配置已成功保存！`, false);
+
+            // 2. 循环保存所有关键词配置
+            const keywordInputs = document.querySelectorAll('.keyword-input');
+            for (const input of keywordInputs) {
+                const handlerName = input.dataset.handler;
+                const keywords = input.value.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0);
+
+                const kwResponse = await fetch(`${API_BASE_URL}/keywords?externalUserId=${encodeURIComponent(userId)}&handlerName=${encodeURIComponent(handlerName)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(keywords),
+                });
+
+                if (!kwResponse.ok) {
+                    const errorData = await kwResponse.json();
+                    throw new Error(`保存关键词 '${handlerName}' 失败: ${errorData.message || kwResponse.statusText}`);
+                }
+            }
+
+            showStatusMessage(`用户 [${userId}] 的所有配置已成功保存！`, false);
+
         } catch (error) {
-            showStatusMessage(`保存AI配置时出错: ${error.message}`, true);
+            showStatusMessage(`保存配置时出错: ${error.message}`, true);
         } finally {
             hideLoader();
         }
     }
 
-    async function saveKeywords(handlerName) {
-        const userId = document.getElementById('externalUserId').value.trim();
-        if (!userId) {
-            showStatusMessage("保存关键词前，请输入用户ID！", true);
-            return;
-        }
-        const inputElement = document.getElementById(handlerName);
-        const keywords = inputElement.value.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0);
-        showLoader();
-        try {
-            const response = await fetch(`${API_BASE_URL}/keywords?externalUserId=${encodeURIComponent(userId)}&handlerName=${encodeURIComponent(handlerName)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(keywords),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`保存失败: ${errorData.message || response.statusText}`);
-            }
-            showStatusMessage(`用户 [${userId}] 的 '${handlerName}' 关键词已成功保存！`, false);
-        } catch (error) {
-            showStatusMessage(`保存关键词时出错: ${error.message}`, true);
-        } finally {
-            hideLoader();
-        }
-    }
 
-    // 页面加载时的初始化逻辑
+    // ==== 页面加载完成后的主执行函数 ====
     document.addEventListener('DOMContentLoaded', () => {
+        // --- ★ 修复: 显式初始化 Bootstrap Tab 组件 ---
+        const triggerTabList = document.querySelectorAll('#configTabs button');
+        triggerTabList.forEach(triggerEl => {
+            const tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', event => {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+
+        // --- 优化: 统一绑定事件监听 ---
+        document.getElementById('loadConfigBtn').addEventListener('click', loadAllConfigs);
+        document.getElementById('resetConfigBtn').addEventListener('click', resetToDefault);
+        document.getElementById('saveAllBtn').addEventListener('click', saveAllConfigs);
+
+        // --- 页面初始加载逻辑 ---
         const userIdInput = document.getElementById('externalUserId');
         const urlParams = new URLSearchParams(window.location.search);
         const userIdFromUrl = urlParams.get('userId');
+
         if (userIdFromUrl) {
             userIdInput.value = userIdFromUrl;
         }
+
         if (userIdInput.value) {
             loadAllConfigs();
         }
-        document.getElementById('loadConfigBtn').addEventListener('click', loadAllConfigs);
-        document.getElementById('resetConfigBtn').addEventListener('click', resetToDefault);
     });
 </script>
 

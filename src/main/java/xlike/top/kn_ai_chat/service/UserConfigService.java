@@ -3,6 +3,9 @@ package xlike.top.kn_ai_chat.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -54,6 +57,15 @@ public class UserConfigService {
     private String defaultSfVoice;
     @Value("${default.ai.siliconflow.vlm-model}")
     private String defaultSfVlmModel;
+
+    @Value("${default.ai.rag.enabled}")
+    private boolean defaultRagEnabled;
+    @Value("${default.ai.rag.rag-model}")
+    private String defaultRagModel;
+    @Value("${default.ai.rag.rag-base-url}")
+    private String defaultRagBaseUrl;
+    @Value("${default.ai.rag.rag-api-key}")
+    private String defaultRagApiKey;
 
 
     @Value("${default.mcp.base-url}")
@@ -111,12 +123,21 @@ public class UserConfigService {
             defaultConfig.setSfVoice(defaultSfVoice);
             defaultConfig.setSfVlmModel(defaultSfVlmModel);
             defaultConfig.setLastModified(LocalDateTime.now());
+
+            // Rag
+            defaultConfig.setRagEnabled(defaultRagEnabled);
+            defaultConfig.setRagModel(defaultRagModel);
+            defaultConfig.setRagBaseUrl(defaultRagBaseUrl);
+            defaultConfig.setRagApiKey(defaultRagApiKey);
+
             aiConfigRepository.save(defaultConfig);
             logger.info("'default'用户配置已成功创建并存入数据库。");
         } else {
             logger.info("数据库中已存在'default'用户配置，无需初始化。");
         }
     }
+
+
 
 
     /**
@@ -271,6 +292,12 @@ public class UserConfigService {
         newConfig.setSfVoice(templateConfig.getSfVoice());
         newConfig.setSfVlmModel(templateConfig.getSfVlmModel());
         newConfig.setLastModified(templateConfig.getLastModified());
+        // RAG
+        newConfig.setRagEnabled(templateConfig.isRagEnabled());
+        newConfig.setRagModel(templateConfig.getRagModel());
+        newConfig.setRagBaseUrl(templateConfig.getRagBaseUrl());
+        newConfig.setRagApiKey(templateConfig.getRagApiKey());
+
         return processPrompt(newConfig);
     }
 
@@ -289,24 +316,21 @@ public class UserConfigService {
         fallbackConfig.setSfVoice(defaultSfVoice);
         fallbackConfig.setSfVlmModel(defaultSfVlmModel);
         fallbackConfig.setLastModified(LocalDateTime.now());
+        // RAG
+        fallbackConfig.setRagEnabled(defaultRagEnabled);
+        fallbackConfig.setRagModel(defaultRagModel);
+        fallbackConfig.setRagBaseUrl(defaultRagBaseUrl);
+        fallbackConfig.setRagApiKey(defaultRagApiKey);
         return processPrompt(fallbackConfig);
     }
 
     public AiConfig saveOrUpdateAiConfig(AiConfig aiConfig) {
         aiConfig.setLastModified(LocalDateTime.now());
+        if (!StringUtils.hasText(aiConfig.getRagApiKey())) {
+            aiConfig.setRagApiKey(aiConfig.getAiApiKey());
+        }
         logger.info("保存或更新用户 {} 的AI配置。", aiConfig.getExternalUserId());
         return aiConfigRepository.save(aiConfig);
-    }
-
-    public List<String> getKeywordsForHandler(String externalUserId, String handlerName) {
-        Optional<KeywordConfig> config = keywordConfigRepository.findByExternalUserIdAndHandlerName(externalUserId, handlerName);
-        if (config.isPresent()) {
-            return Arrays.asList(config.get().getKeywords().split(","));
-        } else {
-            List<String> defaultKeywords = DEFAULT_KEYWORDS_MAP.getOrDefault(handlerName, List.of());
-            logger.debug("用户 {} 无自定义 {} 关键词，使用默认关键词：{}", externalUserId, handlerName, defaultKeywords);
-            return defaultKeywords;
-        }
     }
 
     public Map<String, List<String>> getAllKeywords(String externalUserId) {
@@ -318,6 +342,33 @@ public class UserConfigService {
         return userKeywordsMap;
     }
 
+
+
+    /**
+     * 获取指定处理器的关键词列表
+     */
+    public List<String> getKeywordsForHandler(String externalUserId, String handlerName) {
+        logger.trace("尝试为用户 [{}] 和处理器 [{}] 获取关键词...", externalUserId, handlerName);
+        // 优先查找当前用户的专属关键词
+        Optional<KeywordConfig> userConfig = keywordConfigRepository.findByExternalUserIdAndHandlerName(externalUserId, handlerName);
+        if (userConfig.isPresent() && StringUtils.hasText(userConfig.get().getKeywords())) {
+            return Arrays.asList(userConfig.get().getKeywords().split(","));
+        }
+        // 如果找不到，并且当前用户不是'default'，则去查找'default'用户的数据库配置
+        if (!"default".equals(externalUserId)) {
+            Optional<KeywordConfig> defaultConfig = keywordConfigRepository.findByExternalUserIdAndHandlerName("default", handlerName);
+            if (defaultConfig.isPresent() && StringUtils.hasText(defaultConfig.get().getKeywords())) {
+                return Arrays.asList(defaultConfig.get().getKeywords().split(","));
+            }
+        }
+        // 如果数据库里连'default'的配置都没有（或为空），则使用代码中写死的最终后备值
+        return DEFAULT_KEYWORDS_MAP.getOrDefault(handlerName, List.of());
+    }
+
+    /**
+     * 当保存或更新关键词后，必须清除对应的缓存。
+     */
+    @Transactional
     public KeywordConfig saveOrUpdateKeywordConfig(String externalUserId, String handlerName, List<String> keywords) {
         KeywordConfig config = keywordConfigRepository.findByExternalUserIdAndHandlerName(externalUserId, handlerName)
                 .orElse(new KeywordConfig());
@@ -325,7 +376,6 @@ public class UserConfigService {
         config.setHandlerName(handlerName);
         config.setKeywords(String.join(",", keywords));
         config.setLastModified(LocalDateTime.now());
-        logger.info("保存或更新用户 {} 的 {} 关键词配置。", externalUserId, handlerName);
         return keywordConfigRepository.save(config);
     }
 }

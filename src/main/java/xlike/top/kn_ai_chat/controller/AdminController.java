@@ -1,22 +1,19 @@
 package xlike.top.kn_ai_chat.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import xlike.top.kn_ai_chat.domain.WeChatUser;
-import xlike.top.kn_ai_chat.repository.AiConfigRepository;
-import xlike.top.kn_ai_chat.repository.KeywordConfigRepository;
-import xlike.top.kn_ai_chat.repository.MessageLogRepository;
-import xlike.top.kn_ai_chat.repository.WeChatUserRepository;
+import xlike.top.kn_ai_chat.repository.*;
 import xlike.top.kn_ai_chat.service.KnowledgeBaseService;
 import xlike.top.kn_ai_chat.service.SystemService;
 import xlike.top.kn_ai_chat.service.UserConfigService;
@@ -37,13 +34,18 @@ public class AdminController {
     @Value("${admin.password}")
     private String adminPassword;
 
+    // --- 注入所有需要清空的表的Repository ---
     private final WeChatUserRepository userRepository;
     private final SystemService systemService;
     private final KnowledgeBaseService knowledgeBaseService;
     private final MessageLogRepository messageLogRepository;
     private final AiConfigRepository aiConfigRepository;
-    private final StringRedisTemplate stringRedisTemplate;
     private final KeywordConfigRepository keywordConfigRepository;
+    private final CustomReplyRepository customReplyRepository;
+    private final McpConfigRepository mcpConfigRepository;
+    private final McpAiConfigRepository mcpAiConfigRepository;
+    private final UserMcpPermissionRepository userMcpPermissionRepository;
+    private final StringRedisTemplate stringRedisTemplate;
     private final UserConfigService userConfigService;
 
     @Data
@@ -57,8 +59,19 @@ public class AdminController {
     static class PasswordDto {
         private String password;
     }
-
-    public AdminController(WeChatUserRepository userRepository, SystemService systemService, KnowledgeBaseService knowledgeBaseService, MessageLogRepository messageLogRepository, AiConfigRepository aiConfigRepository, KeywordConfigRepository keywordConfigRepository, StringRedisTemplate stringRedisTemplate, UserConfigService userConfigService) {
+    
+    public AdminController(WeChatUserRepository userRepository,
+                           SystemService systemService, 
+                           KnowledgeBaseService knowledgeBaseService, 
+                           MessageLogRepository messageLogRepository, 
+                           AiConfigRepository aiConfigRepository, 
+                           KeywordConfigRepository keywordConfigRepository, 
+                           StringRedisTemplate stringRedisTemplate, 
+                           UserConfigService userConfigService,
+                           CustomReplyRepository customReplyRepository,
+                           McpConfigRepository mcpConfigRepository,
+                           McpAiConfigRepository mcpAiConfigRepository,
+                           UserMcpPermissionRepository userMcpPermissionRepository) {
         this.userRepository = userRepository;
         this.systemService = systemService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -67,6 +80,10 @@ public class AdminController {
         this.keywordConfigRepository = keywordConfigRepository;
         this.stringRedisTemplate = stringRedisTemplate;
         this.userConfigService = userConfigService;
+        this.customReplyRepository = customReplyRepository;
+        this.mcpConfigRepository = mcpConfigRepository;
+        this.mcpAiConfigRepository = mcpAiConfigRepository;
+        this.userMcpPermissionRepository = userMcpPermissionRepository;
     }
 
 
@@ -89,7 +106,15 @@ public class AdminController {
 
         logger.error("【！！！高危操作警告！！！】密码校验通过，开始执行清空所有表和Redis的请求！");
 
-        // 步骤1: 批量清空所有相关表
+        // --- ★ 步骤1: 批量清空所有相关表（已补全） ---
+        logger.warn("正在清空 UserMcpPermission 表...");
+        userMcpPermissionRepository.deleteAllInBatch();
+        logger.warn("正在清空 CustomReply 表...");
+        customReplyRepository.deleteAllInBatch();
+        logger.warn("正在清空 McpConfig 表...");
+        mcpConfigRepository.deleteAllInBatch();
+        logger.warn("正在清空 McpAiConfig 表...");
+        mcpAiConfigRepository.deleteAllInBatch();
         logger.warn("正在清空 KnowledgeBase 表...");
         knowledgeBaseService.deleteAllKnowledgeData();
         logger.warn("正在清空 MessageLog 表...");
@@ -100,7 +125,9 @@ public class AdminController {
         keywordConfigRepository.deleteAllInBatch();
         logger.warn("正在清空 WeChatUser 表...");
         userRepository.deleteAllInBatch();
+        
         logger.warn("所有数据库表已清空。");
+        
 
         // 步骤2: 清空Redis
         try {
@@ -111,12 +138,16 @@ public class AdminController {
             logger.error("清空Redis数据时发生严重错误。", e);
         }
 
+        // 步骤3: 重新初始化所有默认配置
         logger.error("【！！！系统数据清除完成！！！】");
         userConfigService.initDefaultConfig();
+        userConfigService.initDefaultMcpAiConfig();
         logger.warn("所有数据清空并重新初始化默认配置完成！");
         return ResponseEntity.ok("系统所有数据已成功清除！");
     }
 
+
+    // --- 其他方法保持不变 ---
 
     @GetMapping("/login")
     public String loginPage() {
@@ -142,9 +173,6 @@ public class AdminController {
         return "users";
     }
 
-    /**
-     *自定义回复页面路由
-     */
     @GetMapping("/custom-replies")
     public String customRepliesPage(HttpSession session) {
         if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
@@ -160,7 +188,6 @@ public class AdminController {
             return ResponseEntity.status(401).build();
         }
         List<WeChatUser> users = userRepository.findAll();
-        // 将WeChatUser列表转换为UserStatsDto列表
         List<UserStatsDto> userStats = users.stream()
                 .map(user -> new UserStatsDto(
                         user,
@@ -180,35 +207,18 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
     
-    /**
-     * 【新增】彻底删除用户及其所有数据的API端点
-     */
     @DeleteMapping("/api/users/{userId}")
     @ResponseBody
-    @Transactional // 将所有数据库操作包含在一个事务中，确保原子性
+    @Transactional
     public ResponseEntity<Void> deleteUser(@PathVariable String userId, HttpSession session) {
         if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
             return ResponseEntity.status(401).build();
         }
         logger.warn("接收到删除用户 [{}] 的高危操作请求", userId);
 
-        // 步骤1: 删除对话记录
-        logger.info("正在删除用户 [{}] 的对话记录...", userId);
         messageLogRepository.deleteByFromUserOrToUser(userId, userId);
-        logger.info("用户 [{}] 的对话记录已删除。", userId);
-
-        // 步骤2: 删除知识库文件和记录
-        logger.info("正在删除用户 [{}] 的知识库文件...", userId);
         knowledgeBaseService.deleteKnowledgeByUserId(userId);
-        logger.info("用户 [{}] 的知识库文件已删除。", userId);
-
-        // 步骤3: 删除用户的AI个性化配置
-        logger.info("正在删除用户 [{}] 的AI配置...", userId);
         aiConfigRepository.deleteByExternalUserId(userId);
-        logger.info("用户 [{}] 的AI配置已删除。", userId);
-
-        // 步骤4: 删除用户主体记录
-        logger.info("正在删除用户 [{}] 的主体记录...", userId);
         userRepository.deleteById(userId);
         
         logger.warn("已彻底删除用户 [{}] 及其所有关联数据。", userId);

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -426,7 +428,7 @@ public class WeChatService {
         sendRequest("file", toUser, openKfid, contentMap);
     }
     
-    private void sendRequest(String msgType, String toUser, String openKfid, Map<String, Object> contentMap) {
+    public void sendRequest(String msgType, String toUser, String openKfid, Map<String, Object> contentMap) {
         String accessToken = accessTokenManager.getAccessToken();
         String url = "https://qyapi.weixin.qq.com/cgi-bin/kf/send_msg?access_token=" + accessToken;
 
@@ -435,7 +437,7 @@ public class WeChatService {
         requestBody.put("open_kfid", openKfid);
         requestBody.put("msgtype", msgType);
         requestBody.put(msgType, contentMap);
-
+//        logger.info("发送 {} 消息请求: {}", msgType, requestBody);
         try {
             String jsonBody = objectMapper.writeValueAsString(requestBody);
             String response = restTemplate.postForObject(url, jsonBody, String.class);
@@ -448,4 +450,5 @@ public class WeChatService {
             logger.error("调用发送 {} 消息接口失败", msgType, e);
         }
     }
+
 }
