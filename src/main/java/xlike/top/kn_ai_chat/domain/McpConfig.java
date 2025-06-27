@@ -15,6 +15,9 @@ public class McpConfig {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(nullable = false, length = 50)
+    private String type;
+
     @Column(nullable = false, length = 512)
     private String url;
 

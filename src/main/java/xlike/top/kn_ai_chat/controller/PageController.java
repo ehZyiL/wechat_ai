@@ -37,6 +37,17 @@ public class PageController {
         }
         return "mcp-management";
     }
+
+    /**
+     * MCP配置页面路由
+     */
+    @GetMapping("/admin/mcp-ai-config")
+    public String mcpConfigPage(HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
+            return "redirect:/admin/login";
+        }
+        return "mcp-ai-config";
+    }
     
     /**
      * 文件管理页面路由

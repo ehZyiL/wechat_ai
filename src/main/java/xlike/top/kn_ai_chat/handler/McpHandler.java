@@ -63,7 +63,7 @@ public class McpHandler implements MessageHandler {
             replyText.append(String.format("%d. %s\n", i + 1, authorizedConfigs.get(i).getName()));
         }
         replyText.append("\n请使用 `#mcp-[序号] [您的问题]` 来调用服务。");
-        replyText.append("\n例如: `#mcp-1 介绍一下北京`");
+        replyText.append("\n请使用 `#mcp-1 你的问题` 来调用服务。");
 
         return Optional.of(new TextReply(replyText.toString()));
     }
@@ -76,7 +76,7 @@ public class McpHandler implements MessageHandler {
             int index = Integer.parseInt(matcher.group(1));
             String prompt = matcher.group(2);
             Optional<McpConfig> mcpConfigOpt = mcpService.getMcpConfigFromCache(externalUserId, index);
-            if (!mcpConfigOpt.isPresent()) {
+            if (mcpConfigOpt.isEmpty()) {
                 return Optional.of(new TextReply("❌ 无效的序号或会话已过期。\n请先发送 `#mcp` 获取最新的服务列表。"));
             }
             McpConfig config = mcpConfigOpt.get();

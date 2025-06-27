@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>MCP 模型配置管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bs-primary-rgb: 67, 56, 202;
+            --bs-body-bg: #f1f5f9;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+        }
+        body {
+            background-color: var(--bs-body-bg);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--slate-700);
+        }
+        .page-header {
+            background: white; padding: 1.5rem 2rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            background-color: #fff;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+            height: 100%;
+        }
+        .card-header {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+        }
+        .form-label { font-weight: 500; }
+        .btn { border-radius: 0.5rem; font-weight: 600; }
+        .btn-primary { background-color: rgb(var(--bs-primary-rgb)); border-color: rgb(var(--bs-primary-rgb)); }
+
+        /* --- 全新用户选择器样式 --- */
+        .user-select-dropdown .dropdown-menu {
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            padding: 0.5rem;
+        }
+        .user-select-dropdown .dropdown-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem;
+        }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        #user-select-button .avatar, .placeholder-avatar {
+            width: 36px; height: 36px;
+        }
+        .placeholder-avatar {
+            display: inline-flex; align-items: center; justify-content: center;
+            background-color: #e2e8f0; color: #94a3b8; border-radius: 50%;
+        }
+        #user-select-button {
+            display: flex; align-items: center; gap: 0.75rem;
+            text-align: left; background-color: #fff;
+        }
+        #user-config-card-inner {
+            opacity: 0; max-height: 0; overflow: hidden;
+            transition: all 0.5s ease-in-out; visibility: hidden;
+        }
+        #user-config-card-inner.visible {
+            opacity: 1; max-height: 1000px; visibility: visible; margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-4">
+    <header class="page-header d-flex justify-content-between align-items-center">
+        <h1 class="h4 mb-0 fw-bold text-slate-800"><i class="bi bi-robot me-2 text-primary"></i>MCP 模型配置管理</h1>
+        <a href="/admin/mcp-management" class="btn btn-sm btn-light bg-white border"><i class="bi bi-arrow-left me-1"></i>返回权限中心</a>
+    </header>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4 mb-lg-0">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-globe2 me-2"></i>全局默认配置</div>
+                <div class="card-body d-flex flex-column">
+                    <form id="default-config-form" class="flex-grow-1 d-flex flex-column">
+                        <div class="mb-3">
+                            <label for="default-model" class="form-label">模型 (Model)</label>
+                            <input type="text" class="form-control" id="default-model" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="default-baseUrl" class="form-label">Base URL</label>
+                            <input type="url" class="form-control" id="default-baseUrl" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="default-apiKey" class="form-label">API Key</label>
+                            <input type="password" class="form-control" id="default-apiKey" placeholder="如不修改请留空">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-auto"><i class="bi bi-save me-2"></i>保存全局配置</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-person-fill-gear me-2"></i>用户个性化配置</div>
+                <div class="card-body">
+                    <div id="user-select-container">
+                        <label class="form-label">选择一个用户以进行配置：</label>
+                        <div class="dropdown user-select-dropdown">
+                            <button class="btn btn-light border w-100" type="button" id="user-select-button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu" id="user-select-list" aria-labelledby="user-select-button"></ul>
+                        </div>
+                        <input type="hidden" id="selected-user-id-hidden">
+                    </div>
+
+                    <div id="user-config-card-inner">
+                        <div class="bg-light p-3 rounded-3 border">
+                            <h5 class="card-title mb-3 fw-bold" id="user-config-title"></h5>
+                            <div class="alert d-flex align-items-center" id="user-config-status" role="alert"></div>
+                            <form id="user-config-form">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="user-model" class="form-label">模型 (Model)</label>
+                                        <input type="text" class="form-control" id="user-model" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="user-baseUrl" class="form-label">Base URL</label>
+                                        <input type="url" class="form-control" id="user-baseUrl" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="user-apiKey" class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="user-apiKey" placeholder="留空则继承或不修改">
+                                </div>
+                                <div class="d-flex justify-content-end align-items-center mt-4">
+                                    <button type="button" class="btn btn-outline-danger me-auto" id="reset-user-config-btn">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>重置为默认
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save me-2"></i>保存用户配置
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    <div id="statusToast" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-body d-flex align-items-center p-3 rounded"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let ALL_DATA = {};
+    let usersMap = new Map();
+    let toast;
+
+    // --- 初始化和事件绑定 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        toast = new bootstrap.Toast(document.getElementById('statusToast'));
+        resetUserSelection();
+        loadInitialData();
+
+        $('#default-config-form').on('submit', (e) => handleFormSubmit(e, 'default'));
+        $('#user-config-form').on('submit', (e) => {
+            const userId = $('#selected-user-id-hidden').val();
+            if (userId) handleFormSubmit(e, userId);
+        });
+        $('#reset-user-config-btn').on('click', () => {
+            const userId = $('#selected-user-id-hidden').val();
+            if (userId) resetConfig(userId);
+        });
+    });
+
+    // --- 用户选择器功能 ---
+    function resetUserSelection() {
+        $('#user-select-button').html(`
+            <span class="placeholder-avatar"><i class="bi bi-person"></i></span>
+            <span id="selected-user-text">请选择一个用户</span>
+        `);
+        $('#selected-user-id-hidden').val('');
+        $('#user-config-card-inner').removeClass('visible');
+    }
+
+    function populateUserDropdown(users) {
+        usersMap.clear();
+        const userList = $('#user-select-list');
+        userList.html(`<li><input type="text" class="form-control form-control-sm m-2" style="width: calc(100% - 1rem);" placeholder="搜索用户..." onkeyup="filterUsers(this.value)"></li>`);
+
+        users.forEach(user => {
+            const userInfo = {
+                nickname: user.nickname || '未知昵称',
+                avatar: user.avatar || `https://ui-avatars.com/api/?name=${user.nickname || '?'}&background=random`
+            };
+            usersMap.set(user.externalUserId, userInfo);
+
+            const listItem = $('<li></li>');
+            const link = $(`<a class="dropdown-item" href="#" data-id="${escapeHtml(user.externalUserId)}"></a>`);
+            link.html(`
+                <img src="${escapeHtml(userInfo.avatar)}" class="avatar" alt="avatar">
+                <div class="d-flex flex-column lh-1">
+                    <span class="fw-bold">${escapeHtml(userInfo.nickname)}</span>
+                    <span class="small text-muted">${escapeHtml(user.externalUserId)}</span>
+                </div>
+            `);
+            link.on('click', function(e) {
+                e.preventDefault();
+                const selectedId = $(this).data('id');
+                const selectedUser = usersMap.get(selectedId);
+                $('#selected-user-id-hidden').val(selectedId);
+                $('#user-select-button').html(`
+                    <img src="${escapeHtml(selectedUser.avatar)}" class="avatar" alt="avatar">
+                    <span id="selected-user-text" class="fw-bold">${escapeHtml(selectedUser.nickname)}</span>
+                `);
+                displayUserConfig(selectedId);
+            });
+            listItem.append(link);
+            userList.append(listItem);
+        });
+    }
+
+    function filterUsers(searchTerm) {
+        const term = searchTerm.toLowerCase();
+        $('#user-select-list .dropdown-item').each(function() {
+            const textToSearch = $(this).text().toLowerCase();
+            $(this).parent().toggle(textToSearch.includes(term));
+        });
+    }
+
+    // --- 数据加载与显示 ---
+    async function loadInitialData() {
+        try {
+            const response = await fetch('/admin/api/mcp-ai-config/all');
+            if (!response.ok) throw new Error('加载数据失败');
+            ALL_DATA = await response.json();
+
+            const defaultConfig = ALL_DATA.defaultConfig;
+            $('#default-model').val(defaultConfig.model || '');
+            $('#default-baseUrl').val(defaultConfig.baseUrl || '');
+
+            populateUserDropdown(ALL_DATA.users);
+            resetUserSelection();
+        } catch (error) {
+            showToast(`<i class="bi bi-x-circle-fill"></i> 错误: ${error.message}`, 'bg-danger text-white');
+        }
+    }
+
+    function displayUserConfig(userId) {
+        if (!userId) {
+            $('#user-config-card-inner').removeClass('visible');
+            return;
+        }
+
+        const user = usersMap.get(userId);
+        const userConfig = ALL_DATA.configs[userId];
+        const defaultConfig = ALL_DATA.defaultConfig;
+
+        const hasCustomConfig = !!userConfig;
+        const configToDisplay = userConfig || defaultConfig;
+
+        $('#user-config-title').text(`正在配置: ${user.nickname}`);
+        $('#user-config-status').html(hasCustomConfig
+            ? '<i class="bi bi-check-circle-fill me-2"></i>该用户正在使用个性化配置。'
+            : '<i class="bi bi-info-circle-fill me-2"></i>该用户当前使用全局默认配置。'
+        ).removeClass('alert-info alert-success').addClass(hasCustomConfig ? 'alert-success' : 'alert-info');
+
+        $('#reset-user-config-btn').toggle(hasCustomConfig);
+
+        $('#user-model').val(configToDisplay.model || '');
+        $('#user-baseUrl').val(configToDisplay.baseUrl || '');
+        $('#user-apiKey').val('');
+
+        $('#user-config-card-inner').addClass('visible');
+    }
+
+    // --- 表单提交与重置 ---
+    async function handleFormSubmit(event, userId) {
+        event.preventDefault();
+        const isDefault = userId === 'default';
+        const formPrefix = isDefault ? 'default' : 'user';
+
+        const apiKey = $(`#${formPrefix}-apiKey`).val();
+        const config = {
+            externalUserId: userId,
+            model: $(`#${formPrefix}-model`).val(),
+            baseUrl: $(`#${formPrefix}-baseUrl`).val(),
+        };
+        if (apiKey) {
+            config.apiKey = apiKey;
+        }
+
+        try {
+            const response = await fetch('/admin/api/mcp-ai-config/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            if (!response.ok) throw new Error((await response.json()).error || '未知错误');
+
+            showToast('<i class="bi bi-check-circle-fill"></i> 保存成功！', 'bg-success');
+
+            const previouslySelectedId = isDefault ? null : userId;
+            await loadInitialData();
+            if (previouslySelectedId) {
+                displayUserConfig(previouslySelectedId);
+            }
+        } catch (error) {
+            showToast(`<i class="bi bi-x-circle-fill"></i> 保存失败: ${error.message}`, 'bg-danger');
+        }
+    }
+
+    async function resetConfig(userId) {
+        const userNickname = usersMap.get(userId)?.nickname || userId;
+        if (!confirm(`确定要重置用户 "${userNickname}" 的配置吗？`)) return;
+
+        try {
+            const response = await fetch('/admin/api/mcp-ai-config/reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ externalUserId: userId })
+            });
+            if (!response.ok) throw new Error('重置失败');
+
+            showToast('<i class="bi bi-check-circle-fill"></i> 重置成功！', 'bg-success');
+            await loadInitialData();
+            displayUserConfig(userId);
+        } catch (error) {
+            showToast(`<i class="bi bi-x-circle-fill"></i> 重置失败: ${error.message}`, 'bg-danger');
+        }
+    }
+
+    // --- 工具函数 ---
+    function showToast(message, bgClass) {
+        const toastEl = $('#statusToast');
+        const toastBody = toastEl.find('.toast-body');
+
+        toastBody.html(message);
+        toastEl.removeClass('bg-success bg-danger bg-info').addClass(bgClass);
+        toast.show();
+    }
+
+    function escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+</script>
+
+</body>
+</html>
