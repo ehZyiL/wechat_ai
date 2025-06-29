@@ -66,8 +66,17 @@ public class AiService {
      * @return AI生成的回复文本
      */
     public String getChatCompletion(List<MessageLog> history, String openKfid) {
-        AiConfig aiConfig = userConfigService.getAiConfig(history.get(0).getFromUser());
+        String externalUserId = history.stream()
+                .map(MessageLog::getFromUser)
+                .filter(id -> !id.equals(openKfid))
+                .findFirst()
+                .orElseGet(() -> {
+                    logger.warn("无法在历史记录中找到有效的外部用户ID，将回退到使用history.get(0).getFromUser()");
+                    return history.get(0).getFromUser();
+                });
 
+        AiConfig aiConfig = userConfigService.getAiConfig(externalUserId);
+        logger.info("用户 [{}] 使用的模型为 : {}", history.get(0).getFromUser(), aiConfig.getAiModel());
         List<Map<String, String>> messages = new ArrayList<>();
         String userSystemPrompt = aiConfig.getSystemPrompt();
         String finalSystemPrompt;

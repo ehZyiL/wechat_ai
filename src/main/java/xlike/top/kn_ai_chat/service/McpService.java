@@ -167,7 +167,7 @@ public class McpService {
     }
 
     /**
-     * 【新增】删除一个MCP配置及其所有相关的权限记录
+     *  删除一个MCP配置及其所有相关的权限记录
      * @param mcpConfigId 要删除的MCP配置的ID
      */
     @Transactional(rollbackFor = Exception.class) // 保证事务性

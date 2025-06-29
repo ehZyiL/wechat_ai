@@ -238,13 +238,13 @@ public class UserConfigService {
      * @return 最终生效的McpAiConfig对象
      */
     public McpAiConfig getMcpAiConfig(String externalUserId) {
-        // 1. 尝试获取用户专属配置
+        // 尝试获取用户专属配置
         Optional<McpAiConfig> userConfig = mcpAiConfigRepository.findByExternalUserId(externalUserId);
         if (userConfig.isPresent()) {
             logger.debug("为用户 [{}] 找到并使用其个人MCP AI配置。", externalUserId);
             return userConfig.get();
         }
-        // 2. 如果没有，则获取并返回全局'default'配置
+        // 如果没有，则获取并返回全局'default'配置
         logger.debug("用户 [{}] 无个人MCP AI配置，使用全局'default'配置。", externalUserId);
         return mcpAiConfigRepository.findByExternalUserId("default")
                 .orElseThrow(() -> new IllegalStateException("数据库中未找到'default'的MCP AI配置，请检查初始化过程。"));

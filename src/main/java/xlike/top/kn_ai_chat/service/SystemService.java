@@ -50,7 +50,7 @@ public class SystemService {
     }
 
     /**
-     * 【新增】获取指定用户发送的消息总数
+     *  获取指定用户发送的消息总数
      * @param userId 用户的 externalUserId
      * @return 该用户发送的消息总数
      */

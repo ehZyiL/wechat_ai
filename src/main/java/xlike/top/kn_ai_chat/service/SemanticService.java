@@ -1,5 +1,6 @@
 package xlike.top.kn_ai_chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -15,6 +16,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author xlike
@@ -60,23 +63,33 @@ public class SemanticService {
             logger.info("语义服务API响应: {}", responseStr);
 
             JsonNode root = objectMapper.readTree(responseStr);
-            if(root.has("choices") && root.get("choices").isArray() && !root.get("choices").isEmpty()){
+            if (root.has("choices") && root.get("choices").isArray() && !root.get("choices").isEmpty()) {
                 String contentStr = root.get("choices").get(0).get("message").get("content").asText();
-                
-                JsonNode contentJson = objectMapper.readTree(contentStr);
 
-                if (contentJson.isArray() && !contentJson.isEmpty()) {
-                    JsonNode firstElement = contentJson.get(0);
-                    if (firstElement.isObject() && firstElement.has("result")) {
-                        return firstElement.get("result").asBoolean(false);
+                try {
+                    // 使用JSON解析
+                    JsonNode contentJson = objectMapper.readTree(contentStr);
+                    if (contentJson.isObject() && contentJson.has("result")) {
+                        logger.info("成功通过标准JSON解析获取 'result'");
+                        return contentJson.get("result").asBoolean(false);
                     }
-                }
-                else if (contentJson.isObject() && contentJson.has("result")) {
-                    return contentJson.get("result").asBoolean(false);
+                } catch (JsonProcessingException e) {
+                    // JSON解析失败，启用正则解析
+                    logger.warn("标准JSON解析失败: '{}'。将尝试使用正则表达式进行提取。", e.getMessage());
+                    Pattern pattern = Pattern.compile("['\"]result['\"]\\s*:\\s*(true|false)");
+                    Matcher matcher = pattern.matcher(contentStr);
+                    if (matcher.find()) {
+                        // group(1) 会捕获 (true|false)
+                        String result = matcher.group(1);
+                        logger.info("成功通过正则表达式后备方案获取 'result' 为 ： {}", result);
+                        return Boolean.parseBoolean(result);
+                    } else {
+                        logger.error("正则表达式也无法从 content 中解析出 'result' : {}", contentStr);
+                    }
                 }
             }
         } catch (Exception e) {
-            logger.error("调用或解析语义服务API时发生异常", e);
+            logger.error("调用或解析语义服务API时发生顶层异常", e);
         }
 
         return false;
