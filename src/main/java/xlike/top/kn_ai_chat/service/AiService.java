@@ -127,8 +127,7 @@ public class AiService {
         try {
             // 创建文档
             Document document = Document.from(knowledgeBase);
-
-            // 创建嵌入模型 (Embedding Model)
+            // 创建嵌入模型
             EmbeddingModel embeddingModel = OpenAiEmbeddingModel.builder()
                     .baseUrl(aiConfig.getRagBaseUrl())
                     .apiKey(aiConfig.getRagApiKey())
@@ -149,7 +148,7 @@ public class AiService {
                     .embeddingStore(embeddingStore)
                     .embeddingModel(embeddingModel)
                     // 检索最相关的5个片段
-                    .maxResults(3)
+                    .maxResults(5)
                     // 最小相似度得分
                     .minScore(0.6)
                     .build();

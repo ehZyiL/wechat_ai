@@ -27,6 +27,17 @@ public class PageController {
         return "config";
     }
 
+
+
+    @GetMapping("/admin/chat")
+    public String chatPage(HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("isAdmin"))) {
+            return "redirect:/admin/login";
+        }
+        return "chat";
+    }
+
+
     /**
      * MCP管理页面路由
      */

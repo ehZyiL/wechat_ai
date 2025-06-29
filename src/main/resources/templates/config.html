@@ -302,7 +302,25 @@
                                 <div class="card keyword-card h-100">
                                     <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-book-half me-2 text-secondary"></i>知识库 (KnowledgeHandler)</h6></div>
                                     <div class="card-body">
-                                        <input type="text" class="form-control keyword-input" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
+                                        <label class="form-label small">通用知识库指令</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="KnowledgeHandler" data-handler="KnowledgeHandler" placeholder="例如: 知识库,根据文档回答">
+                                        <label class="form-label small">列出文件</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="KnowledgeHandler_List" data-handler="KnowledgeHandler_List">
+                                        <label class="form-label small">删除文件 (注:此为前缀,如 "删除文件 ")</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="KnowledgeHandler_Delete" data-handler="KnowledgeHandler_Delete">
+                                        <label class="form-label small">删除所有文件</label>
+                                        <input type="text" class="form-control keyword-input" id="KnowledgeHandler_DeleteAll" data-handler="KnowledgeHandler_DeleteAll">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card keyword-card h-100">
+                                    <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-headset me-2 text-warning"></i>人工服务 (ManualChatHandler)</h6></div>
+                                    <div class="card-body">
+                                        <label class="form-label small">进入人工服务</label>
+                                        <input type="text" class="form-control keyword-input mb-2" id="ManualChatHandler_Enter" data-handler="ManualChatHandler_Enter">
+                                        <label class="form-label small">退出人工服务</label>
+                                        <input type="text" class="form-control keyword-input" id="ManualChatHandler_Exit" data-handler="ManualChatHandler_Exit">
                                     </div>
                                 </div>
                             </div>

@@ -25,24 +25,24 @@ public class KnowledgeHandler implements MessageHandler {
     private final AiService aiService;
     private final UserConfigService userConfigService;
 
-    private static final String LIST_COMMAND = "列出文件";
-    private static final String DELETE_COMMAND_PREFIX = "删除文件 ";
-    private static final String DELETE_ALL_COMMAND = "删除所有文件";
-
     public KnowledgeHandler(KnowledgeBaseService knowledgeBaseService, AiService aiService, UserConfigService userConfigService) {
         this.knowledgeBaseService = knowledgeBaseService;
         this.aiService = aiService;
         this.userConfigService = userConfigService;
     }
 
-
     @Override
     public boolean canHandle(String content, String externalUserId) {
-        String lowerCaseContent = content.toLowerCase();
+        String lowerCaseContent = content.toLowerCase().trim();
         
-        if (lowerCaseContent.equals(LIST_COMMAND.toLowerCase()) ||
-            lowerCaseContent.startsWith(DELETE_COMMAND_PREFIX.toLowerCase()) ||
-            lowerCaseContent.equalsIgnoreCase(DELETE_ALL_COMMAND)) {
+        boolean isListCommand = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_List")
+                .stream().anyMatch(kw -> kw.equalsIgnoreCase(lowerCaseContent));
+        boolean isDeleteAllCommand = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_DeleteAll")
+                .stream().anyMatch(kw -> kw.equalsIgnoreCase(lowerCaseContent));
+        boolean isDeleteCommand = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_Delete")
+                .stream().anyMatch(lowerCaseContent::startsWith);
+
+        if (isListCommand || isDeleteAllCommand || isDeleteCommand) {
             return true;
         }
         
@@ -52,21 +52,29 @@ public class KnowledgeHandler implements MessageHandler {
 
     @Override
     public Optional<Reply> handle(String externalUserId, String openKfid, String content, List<MessageLog> history) {
-        if (content.equalsIgnoreCase(LIST_COMMAND)) {
+        String trimmedContent = content.trim();
+
+        boolean isListCommand = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_List")
+                .stream().anyMatch(kw -> kw.equalsIgnoreCase(trimmedContent));
+        if (isListCommand) {
             logger.info("用户 [{}] 执行知识库指令: 列出文件", externalUserId);
             String fileList = knowledgeBaseService.getFormattedFileListForUser(externalUserId);
             return Optional.of(new TextReply(fileList));
         }
         
-        if (content.equalsIgnoreCase(DELETE_ALL_COMMAND)) {
+        boolean isDeleteAllCommand = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_DeleteAll")
+                .stream().anyMatch(kw -> kw.equalsIgnoreCase(trimmedContent));
+        if (isDeleteAllCommand) {
             logger.info("用户 [{}] 执行知识库指令: 删除所有文件", externalUserId);
             String result = knowledgeBaseService.deleteAllFilesForUser(externalUserId);
             return Optional.of(new TextReply(result));
         }
 
-        if (content.toLowerCase().startsWith(DELETE_COMMAND_PREFIX.toLowerCase())) {
+        Optional<String> deletePrefix = userConfigService.getKeywordsForHandler(externalUserId, "KnowledgeHandler_Delete")
+                .stream().filter(trimmedContent::startsWith).findFirst();
+        if (deletePrefix.isPresent()) {
             logger.info("用户 [{}] 执行知识库指令: 删除文件", externalUserId);
-            String idStr = content.substring(DELETE_COMMAND_PREFIX.length()).trim();
+            String idStr = trimmedContent.substring(deletePrefix.get().length()).trim();
             try {
                 long id = Long.parseLong(idStr);
                 String result = knowledgeBaseService.deleteFileForUser(id, externalUserId);

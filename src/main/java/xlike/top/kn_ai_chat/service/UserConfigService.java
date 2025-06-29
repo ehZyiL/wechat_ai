@@ -83,17 +83,24 @@ public class UserConfigService {
 
 
     // 默认关键词
-    private static final Map<String, List<String>> DEFAULT_KEYWORDS_MAP = Map.of(
-            "DrawingHandler", Arrays.asList("画一张", "画一个", "画张", "画个", "画只","画一只"),
-            "LotteryHandler", Arrays.asList("大乐透", "双色球", "今日中奖号码", "查彩票", "开奖"),
-            "MenuHandler", Arrays.asList("菜单", "功能", "帮助", "你能做什么", "help", "menu"),
-            "SystemHandler_ClearHistory", Arrays.asList("清空历史对话", "清空记录", "清除历史对话","清空聊天记录","清除聊天记录"),
-            "SystemHandler_QueryId", Arrays.asList("查询id", "我的id"),
-            "SystemHandler_ChatStats", Arrays.asList("对话统计", "消息统计"),
-            "SystemHandler_UserQuestions", Arrays.asList("我问过的问题", "历史问题", "我的提问"),
-            "VoiceReplyHandler", Arrays.asList("语音回答", "语音回复", "用语音说", "讲一下"),
-            "KnowledgeHandler", Arrays.asList("知识库")
+    private static final Map<String, List<String>> DEFAULT_KEYWORDS_MAP = Map.ofEntries(
+            Map.entry("DrawingHandler", Arrays.asList("画一张", "画一个", "画张", "画个", "画只","画一只")),
+            Map.entry("LotteryHandler", Arrays.asList("大乐透", "双色球", "今日中奖号码", "查彩票", "开奖")),
+            Map.entry("MenuHandler", Arrays.asList("菜单", "功能", "帮助", "你能做什么", "help", "menu")),
+            Map.entry("SystemHandler_ClearHistory", Arrays.asList("清空历史对话", "清空记录", "清除历史对话","清空聊天记录","清除聊天记录")),
+            Map.entry("SystemHandler_QueryId", Arrays.asList("查询id", "我的id")),
+            Map.entry("SystemHandler_ChatStats", Arrays.asList("对话统计", "消息统计")),
+            Map.entry("SystemHandler_UserQuestions", Arrays.asList("我问过的问题", "历史问题", "我的提问")),
+            Map.entry("VoiceReplyHandler", Arrays.asList("语音回答", "语音回复", "用语音说", "讲一下")),
+            Map.entry("KnowledgeHandler", Arrays.asList("知识库")),
+            // 新增配置项
+            Map.entry("ManualChatHandler_Enter", Arrays.asList("转人工", "人工服务")),
+            Map.entry("ManualChatHandler_Exit", Arrays.asList("结束人工服务", "退出", "结束服务")),
+            Map.entry("KnowledgeHandler_List", List.of("列出文件", "我的文件", "文件列表", "查看文件")),
+            Map.entry("KnowledgeHandler_Delete", List.of("删除文件")),
+            Map.entry("KnowledgeHandler_DeleteAll", List.of("删除所有文件"))
     );
+
 
 
     @PostConstruct
@@ -211,7 +218,7 @@ public class UserConfigService {
     }
 
     /**
-     * 【新增】重置（删除）一个用户的MCP AI配置
+     * 重置（删除）一个用户的MCP AI配置
      * @param externalUserId 要重置配置的用户ID
      */
     public void resetMcpAiConfig(String externalUserId) {
