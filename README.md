@@ -75,7 +75,7 @@ https://github.com/user-attachments/assets/fc1c3d0d-9faa-40ef-9073-e48c567481a6
 ![后台登录页面](files/login.png)
 ### 用户管理
 ![用户管理页面](files/user.png)
-### 人工客服聊天
+### 人工客服聊天（目前只支持文字）
 ![人工客服聊天页面](files/chat.png)
 ### MCP 服务权限管理
 ![MCP 服务权限管理页面](files/mcp-permissions.png)
