@@ -1,6 +1,6 @@
 services:
   app:
-    image: xlike0616/kn_ai_chat:1.0.1
+    image: xlike0616/kn_ai_chat:latest
     container_name: kn-ai-chat-app
     restart: always
     ports:
@@ -9,7 +9,7 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
     env_file:
-      - ./.env
+      - .env
     depends_on:
       - redis
     networks:

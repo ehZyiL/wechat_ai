@@ -29,29 +29,6 @@ spring:
           max-idle: 5
           min-idle: 0
 
-
-tools:
-  google:
-    api-key: ${GOOGLE_API_KEY}
-    cx-id: ${GOOGLE_CX_ID}
-  brave:
-    api-key: ${BRAVE_API_KEY}
-  email:
-    host: ${EMAIL_HOST}
-    port: ${EMAIL_PORT}
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_PASSWORD}
-    imap:
-      host: ${EMAIL_IMAP_HOST}
-      port: ${EMAIL_IMAP_PORT}
-  notion:
-    api:
-      key: ${NOTION_API_KEY}
-      version: ${NOTION_API_VERSION}
-      base-url: ${NOTION_BASE_URL}
-    database:
-      id: ${NOTION_DATABASE_ID}
-
 # 微信客服配置，由 .env 文件决定
 wechat:
   token: ${WECHAT_TOKEN}

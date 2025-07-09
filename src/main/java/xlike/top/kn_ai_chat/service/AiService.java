@@ -132,7 +132,7 @@ public class AiService {
     /**
      * RAG模式：使用Langchain4j构建AI助手
      */
-    private String executeRagAssistant(String userQuestion, String knowledgeBase, AiConfig aiConfig) {
+    public String executeRagAssistant(String userQuestion, String knowledgeBase, AiConfig aiConfig) {
         try {
             // 创建文档
             Document document = Document.from(knowledgeBase);
@@ -157,9 +157,9 @@ public class AiService {
                     .embeddingStore(embeddingStore)
                     .embeddingModel(embeddingModel)
                     // 检索最相关的5个片段
-                    .maxResults(5)
+                    .maxResults(10)
                     // 最小相似度得分
-                    .minScore(0.6)
+                    .minScore(0.7)
                     .build();
             // 创建聊天模型
             String rawChatUrl = aiConfig.getAiBaseUrl();
