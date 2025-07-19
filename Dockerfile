@@ -5,6 +5,12 @@ FROM maven:3.9.6-eclipse-temurin-21 AS builder
 # 设置工作目录
 WORKDIR /app
 
+
+# 配置阿里云镜像
+RUN mkdir -p /root/.m2 && \
+    echo '<settings><mirrors><mirror><id>aliyunmaven</id><mirrorOf>*</mirrorOf><name>阿里云公共仓库</name><url>https://maven.aliyun.com/repository/public</url></mirror></mirrors></settings>' > /root/.m2/settings.xml
+
+
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
