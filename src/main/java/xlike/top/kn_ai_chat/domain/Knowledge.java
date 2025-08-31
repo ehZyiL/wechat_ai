@@ -2,6 +2,7 @@ package xlike.top.kn_ai_chat.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 /**
@@ -22,24 +23,24 @@ public class Knowledge {
     /**
      * 关联的微信用户的 external_userid，用于数据隔离
      */
-    @Column(nullable = false, updatable = false)
+    @Column(name = "external_user_id", nullable = false, updatable = false)
     private String externalUserId;
 
     /**
      * 上传时的原始文件名
      */
-    @Column(nullable = false)
+    @Column(name = "file_name", nullable = false)
     private String fileName;
 
     /**
      * 从文件中提取的纯文本内容
      */
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
     /**
      * 记录创建时间
      */
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

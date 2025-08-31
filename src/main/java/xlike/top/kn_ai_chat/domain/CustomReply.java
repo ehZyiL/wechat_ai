@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @Entity
+@Table(name = "custom_reply")
 public class CustomReply {
 
     @Id
@@ -20,19 +21,19 @@ public class CustomReply {
 
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "match_type", nullable = false)
     private MatchType matchType;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "keyword", nullable = false, length = 255)
     private String keyword;
 
-    @Column(nullable = false, length = 2048)
+    @Column(name = "reply", nullable = false, length = 2048)
     private String reply;
 
-    @Column(length = 255)
+    @Column(name = "external_user_id", length = 255)
     private String externalUserId;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "create_time", updatable = false)
     private LocalDateTime createTime;
 }

@@ -17,17 +17,18 @@ import java.time.LocalDateTime;
 public class McpAiConfig {
 
     @Id
+    @Column(name = "external_user_id")
     private String externalUserId;
 
-    @Column(nullable = false)
+    @Column(name = "base_url", nullable = false)
     private String baseUrl;
 
-    @Column(nullable = false)
+    @Column(name = "api_key", nullable = false)
     private String apiKey;
 
-    @Column(nullable = false)
+    @Column(name = "model", nullable = false)
     private String model;
-    
-    @Column(nullable = false)
+
+    @Column(name = "last_modified", nullable = false)
     private LocalDateTime lastModified;
 }

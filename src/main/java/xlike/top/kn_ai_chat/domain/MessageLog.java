@@ -20,15 +20,21 @@ public class MessageLog {
     /**
      * 微信消息的唯一ID，用于持久化幂等性判断
      */
-    @Column(unique = true, nullable = true)
+    @Column(name = "msg_id", unique = true, nullable = true)
     private String msgId;
 
+    @Column(name = "from_user")
     private String fromUser;
+
+    @Column(name = "to_user")
     private String toUser;
+
+    @Column(name = "msg_type")
     private String msgType;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "timestamp")
     private LocalDateTime timestamp;
 }

@@ -12,13 +12,13 @@ public class McpConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "type", nullable = false, length = 50)
     private String type;
 
-    @Column(nullable = false, length = 512)
+    @Column(name = "url", nullable = false, length = 512)
     private String url;
 
     @Column(name = "sse_endpoint", nullable = false, length = 512)

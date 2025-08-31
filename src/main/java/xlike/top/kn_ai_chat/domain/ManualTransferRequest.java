@@ -2,6 +2,7 @@ package xlike.top.kn_ai_chat.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -13,19 +14,19 @@ public class ManualTransferRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "external_user_id", nullable = false, unique = true)
     private String externalUserId;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "externalUserId", referencedColumnName = "externalUserId", insertable = false, updatable = false)
+    @JoinColumn(name = "external_user_id", referencedColumnName = "external_user_id", insertable = false, updatable = false)
     private WeChatUser user;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "last_message", nullable = false, columnDefinition = "TEXT")
     private String lastMessage;
 
-    @Column(nullable = false)
+    @Column(name = "request_time", nullable = false)
     private LocalDateTime requestTime;
 
-    @Column(nullable = false)
+    @Column(name = "resolved", nullable = false)
     private boolean resolved = false;
 }

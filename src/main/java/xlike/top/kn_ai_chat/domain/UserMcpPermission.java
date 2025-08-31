@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "user_mcp_permission", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"externalUserId", "mcp_config_id"})
+        @UniqueConstraint(columnNames = {"external_user_id", "mcp_config_id"})
 })
 public class UserMcpPermission {
 
@@ -17,7 +17,7 @@ public class UserMcpPermission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "external_user_id", nullable = false)
     private String externalUserId;
 
     @ManyToOne(fetch = FetchType.LAZY)

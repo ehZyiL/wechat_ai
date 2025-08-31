@@ -50,6 +50,16 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- Flyway Database Migration -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
@@ -144,6 +154,7 @@
             <artifactId>langchain4j-open-ai</artifactId>
             <version>1.1.0</version>
         </dependency>
+
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -259,6 +270,7 @@
     </profiles>
 
     <build>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

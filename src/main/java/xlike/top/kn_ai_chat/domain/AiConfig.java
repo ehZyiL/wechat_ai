@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 /**
@@ -16,52 +17,53 @@ import java.time.LocalDateTime;
 public class AiConfig {
 
     @Id
+    @Column(name = "external_user_id")
     private String externalUserId;
 
-    @Column(nullable = false)
+    @Column(name = "ai_base_url", nullable = false)
     private String aiBaseUrl;
 
-    @Column(nullable = false)
+    @Column(name = "ai_api_key", nullable = false)
     private String aiApiKey;
 
-    @Column(nullable = false)
+    @Column(name = "ai_model", nullable = false)
     private String aiModel;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "system_prompt", columnDefinition = "TEXT", nullable = false)
     private String systemPrompt;
 
-    @Column(nullable = false)
+    @Column(name = "sf_base_url", nullable = false)
     private String sfBaseUrl;
 
-    @Column(nullable = false)
+    @Column(name = "sf_image_model", nullable = false)
     private String sfImageModel;
 
-    @Column(nullable = false)
+    @Column(name = "sf_tts_model", nullable = false)
     private String sfTtsModel;
 
-    @Column(nullable = false)
+    @Column(name = "sf_stt_model", nullable = false)
     private String sfSttModel;
 
-    @Column(nullable = false)
+    @Column(name = "sf_voice", nullable = false)
     private String sfVoice;
 
-    @Column(nullable = false)
+    @Column(name = "sf_vlm_model", nullable = false)
     private String sfVlmModel;
 
-    @Column(nullable = false)
+    @Column(name = "rag_enabled", nullable = false)
     private boolean ragEnabled = false;
 
     // 新增Rag字段
-    @Column
+    @Column(name = "rag_model")
     private String ragModel;
 
-    @Column
+    @Column(name = "rag_base_url")
     private String ragBaseUrl;
 
-    @Column
+    @Column(name = "rag_api_key")
     private String ragApiKey;
 
 
-    @Column(nullable = false)
+    @Column(name = "last_modified", nullable = false)
     private LocalDateTime lastModified;
 }

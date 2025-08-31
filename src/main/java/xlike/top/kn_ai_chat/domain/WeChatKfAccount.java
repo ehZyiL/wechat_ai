@@ -25,12 +25,12 @@ public class WeChatKfAccount {
     /**
      * 客服账号名称
      */
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
     /**
      * 客服账号头像URL
      */
-    @Column(nullable = false, length = 512)
+    @Column(name = "avatar", nullable = false, length = 512)
     private String avatar;
 }
